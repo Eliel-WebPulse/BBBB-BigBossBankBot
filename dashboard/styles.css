@@ -140,20 +140,32 @@ body::before {
 .main {
   display: grid;
   gap: 24px;
+  min-width: 0;
 }
 
 .hero {
   display: grid;
-  grid-template-columns: 1.2fr 0.9fr;
+  grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
   gap: 24px;
   align-items: start;
 }
 
+.hero > div,
+.auth-card,
+.panel,
+.link-card,
+.link-actions,
+.form-grid label {
+  min-width: 0;
+}
+
 .hero h1 {
   margin: 14px 0 12px;
-  font-size: clamp(2.4rem, 4vw, 4.2rem);
-  line-height: 0.95;
+  max-width: 12ch;
+  font-size: clamp(2.4rem, 3.6vw, 3.8rem);
+  line-height: 0.98;
   letter-spacing: -0.06em;
+  text-wrap: balance;
 }
 
 .hero p {
@@ -200,6 +212,23 @@ body::before {
   margin-bottom: 4px;
 }
 
+.session-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.session-pill.is-authenticated {
+  background: rgba(57, 217, 138, 0.12);
+  color: #9ff0c2;
+}
+
 .auth-head > div,
 .link-card > div:first-child {
   display: grid;
@@ -236,6 +265,10 @@ body::before {
 .form-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 18px;
+}
+
+.field-span-2 {
+  grid-column: span 2;
 }
 
 label {
@@ -308,15 +341,19 @@ input,
   margin-top: 18px;
   padding: 18px 20px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 1fr;
   gap: 18px;
-  align-items: center;
+  align-items: start;
+}
+
+.link-copy {
+  max-width: 54ch;
 }
 
 #linkCode {
   display: inline-grid;
   place-items: center;
-  min-width: 122px;
+  min-width: 110px;
   min-height: 56px;
   padding: 12px 18px;
   border-radius: 14px;
@@ -341,9 +378,11 @@ input,
 
 .link-actions {
   display: grid;
-  grid-template-columns: auto auto auto;
+  grid-template-columns: repeat(3, minmax(0, max-content));
   gap: 12px;
   align-items: center;
+  justify-content: start;
+  width: 100%;
 }
 
 .link-open-btn {
@@ -539,6 +578,16 @@ code {
   }
 }
 
+@media (max-width: 960px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    max-width: 14ch;
+  }
+}
+
 @media (max-width: 780px) {
   .app-shell {
     padding: 14px;
@@ -562,7 +611,12 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .field-span-2 {
+    grid-column: auto;
+  }
+
   .hero h1 {
     font-size: 2.4rem;
+    max-width: none;
   }
 }

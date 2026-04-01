@@ -22,6 +22,7 @@ const state = {
 
 const els = {
   authStatus: document.getElementById('authStatus'),
+  sessionPill: document.getElementById('sessionPill'),
   supabaseUrl: document.getElementById('supabaseUrl'),
   supabaseAnonKey: document.getElementById('supabaseAnonKey'),
   telegramBotUsername: document.getElementById('telegramBotUsername'),
@@ -116,6 +117,22 @@ function notify(message) {
   window.alert(message);
 }
 
+function setAuthMessage(error, fallback = 'Nao consegui concluir esta acao agora.') {
+  const rawMessage = String(error && error.message ? error.message : '').toLowerCase();
+
+  if (rawMessage.includes('invalid login credentials')) {
+    notify('Email ou senha incorretos. Se ainda nao tiver cadastro, use "Criar conta".');
+    return;
+  }
+
+  if (rawMessage.includes('email not confirmed')) {
+    notify('Confirme seu email antes de entrar no dashboard.');
+    return;
+  }
+
+  notify(error && error.message ? error.message : fallback);
+}
+
 function makeYearOptions() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: YEAR_COUNT }, (_, index) => currentYear - index);
@@ -137,6 +154,24 @@ function initClient() {
   state.client = createClient(config.url, anonKey);
   els.authStatus.textContent = 'Cliente Supabase configurado';
   return state.client;
+}
+
+function updateAuthUI() {
+  const isAuthenticated = Boolean(state.user);
+
+  els.logoutBtn.disabled = !isAuthenticated;
+  els.generateLinkBtn.disabled = !isAuthenticated;
+
+  if (isAuthenticated) {
+    els.sessionPill.textContent = `Sessao ativa em ${state.user.email}`;
+    els.sessionPill.classList.add('is-authenticated');
+    return;
+  }
+
+  els.sessionPill.textContent = 'Sessão não iniciada';
+  els.sessionPill.classList.remove('is-authenticated');
+  els.linkCode.textContent = '----';
+  updateTelegramLinkButton('----');
 }
 
 function emptyArrayMessage(colspan, text) {
@@ -579,11 +614,12 @@ async function bootstrap() {
 
       await signIn();
       updateAuthStatus(`Logado como ${state.user.email}`);
+      updateAuthUI();
       await fetchTelegramLink();
       await fetchAllData();
     } catch (error) {
       console.error(error);
-      notify(error.message);
+      setAuthMessage(error, 'Nao consegui entrar no dashboard agora.');
     }
   });
 
@@ -597,7 +633,7 @@ async function bootstrap() {
       notify('Conta criada. Confira seu email e faça login.');
     } catch (error) {
       console.error(error);
-      notify(error.message);
+      setAuthMessage(error, 'Nao consegui criar sua conta agora.');
     }
   });
 
@@ -610,6 +646,7 @@ async function bootstrap() {
     state.user = null;
     state.session = null;
     updateAuthStatus('Sessão encerrada');
+    updateAuthUI();
   });
 
   els.generateLinkBtn.addEventListener('click', async () => {
@@ -636,17 +673,34 @@ async function bootstrap() {
   });
 
   if (state.client) {
+    state.client.auth.onAuthStateChange(async (_event, session) => {
+      state.session = session || null;
+      state.user = session ? session.user : null;
+
+      if (!state.user) {
+        updateAuthStatus('Sessão encerrada');
+        updateAuthUI();
+        return;
+      }
+
+      updateAuthStatus(`Logado como ${state.user.email}`);
+      updateAuthUI();
+      await fetchTelegramLink();
+    });
+
     const { data } = await state.client.auth.getSession();
 
     if (data.session) {
       state.session = data.session;
       state.user = data.session.user;
       updateAuthStatus(`Logado como ${state.user.email}`);
+      updateAuthUI();
       await fetchTelegramLink();
       await fetchAllData();
     }
   }
 
+  updateAuthUI();
   updateTelegramLinkButton();
 }
 
