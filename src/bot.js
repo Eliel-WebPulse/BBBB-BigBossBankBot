@@ -665,6 +665,16 @@ bot.command('ajustar_saldo', async (ctx) => {
   }
 });
 
+bot.command('ajuda', async (ctx) => {
+  await ctx.reply(
+    '💡 Como usar o bot:\n\n' +
+    '💸 Registrar gasto:\n"gastei 35 no almoço"\n"paguei 150 de uber"\n\n' +
+    '💰 Registrar receita:\n"recebi 3000 de salário"\n"ganhei 200 de freela"\n\n' +
+    '📊 Consultas:\n/saldo — ver saldo atual\n/resumo — resumo do mês\n\n' +
+    '⚠️ Dica: sempre inclua o valor em números!'
+  );
+});
+
 bot.on('text', async (ctx) => {
   const texto = ctx.message && ctx.message.text ? ctx.message.text.trim() : '';
 

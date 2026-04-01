@@ -14,22 +14,23 @@ const model = genAI.getGenerativeModel({
 });
 
 const PROMPT_SISTEMA = [
-  'Voce e um extrator de dados para um bot de financas pessoais em portugues brasileiro.',
-  'Analise a mensagem do usuario e responda APENAS com JSON valido, sem markdown, sem comentarios e sem texto adicional.',
-  'Se a mensagem indicar um GASTO (gastei, paguei, comprei, saiu, foi, custou, despesa, conta), retorne:',
-  '{"tipo":"gasto","valor":numero,"categoria":"string","descricao":"string","ehConsulta":false}',
-  'Se a mensagem indicar uma RECEITA (recebi, ganhei, entrou, salario, renda, freelance, pagaram), retorne:',
-  '{"tipo":"receita","valor":numero,"categoria":"string","descricao":"string","ehConsulta":false}',
-  'Categorias para gasto: Alimentacao, Transporte, Moradia, Saude, Lazer, Educacao, Outros.',
-  'Categorias para receita: Salario, Freelance, Investimentos, Outros.',
-  'Se a mensagem for sobre SALDO (saldo, quanto tenho, meu dinheiro, saldo atual, quanto sobrou, estou no positivo, estou no negativo), retorne:',
+  'Voce e um assistente de financas pessoais. Analise mensagens em portugues brasileiro informal.',
+  'Responda APENAS com JSON valido, sem markdown, sem texto adicional.',
+  'TRANSACAO FINANCEIRA - qualquer mencao a dinheiro com valor numerico:',
+  'Palavras de GASTO: gastei, paguei, comprei, saiu, foi, custou, comi, bebi, uber, ifood, mercado, conta, boleto, aluguel, luz, agua, internet, remedio, consulta, ingresso, cinema, academia.',
+  'Palavras de RECEITA: recebi, ganhei, entrou, caiu na conta, salario, freela, freelance, pagaram, vendi, renda, dividendo, bonus.',
+  'Formato: {"tipo":"gasto" ou "receita","valor":numero,"categoria":"string","descricao":"string","ehConsulta":false}',
+  'Categorias gasto: Alimentacao, Transporte, Moradia, Saude, Lazer, Educacao, Outros.',
+  'Categorias receita: Salario, Freelance, Investimentos, Outros.',
+  'CONSULTA DE SALDO - perguntas sobre quanto tem, saldo, dinheiro disponivel:',
+  'Exemplos: qual meu saldo, quanto tenho, to no positivo, sobrou dinheiro, saldo atual, quanto tenho disponivel.',
   '{"ehConsulta":true,"tipoConsulta":"saldo"}',
-  'Se a mensagem for sobre RESUMO (resumo, relatorio, como fui, gastos do mes, historico, extrato, balanco), retorne:',
+  'CONSULTA DE RESUMO - perguntas sobre gastos, historico, relatorio do mes:',
+  'Exemplos: resumo do mes, como estao meus gastos, extrato, relatorio, balanco, quanto gastei.',
   '{"ehConsulta":true,"tipoConsulta":"resumo"}',
-  'Seja FLEXIVEL com variacoes de escrita, erros de digitacao e linguagem informal.',
-  'Se nao houver informacao suficiente, retorne:',
-  '{"ehConsulta":false,"invalido":true}',
-  'Retorne apenas o numero para valores monetarios, sem simbolo de moeda.'
+  'Mensagens sem valor numerico E sem intencao financeira clara = {"ehConsulta":false,"invalido":true}',
+  'Seja flexivel com erros de digitacao, girias e linguagem informal.',
+  'Valor monetario: retorne apenas o numero sem simbolo.'
 ].join(' ');
 
 function limparRespostaJSON(texto) {
