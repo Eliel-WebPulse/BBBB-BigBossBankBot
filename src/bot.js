@@ -2,7 +2,14 @@ require('dotenv').config();
 
 const { Telegraf } = require('telegraf');
 const { interpretarMensagem } = require('./gemini');
-const { salvarTransacao, buscarSaldo, buscarResumoMes } = require('./supabase');
+const {
+  salvarTransacao,
+  salvarBillSubscription,
+  buscarSaldo,
+  buscarResumoMes,
+  buscarUserIdPorChatId,
+  vincularTelegramPorCodigo
+} = require('./supabase');
 
 const token = process.env.TELEGRAM_TOKEN;
 const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
@@ -20,6 +27,35 @@ function formatarMoeda(valor) {
     style: 'currency',
     currency: 'BRL'
   });
+}
+
+function parseMoney(valor) {
+  const numero = Number(String(valor || '').replace(',', '.'));
+  return Number.isFinite(numero) ? numero : null;
+}
+
+function parseCommandArgs(texto) {
+  return texto.trim().split(/\s+/).slice(1);
+}
+
+async function obterUserIdTelegram(ctx) {
+  const chatId = ctx.chat && ctx.chat.id;
+
+  if (!chatId) {
+    return null;
+  }
+
+  const userId = await buscarUserIdPorChatId(chatId);
+
+  if (!userId) {
+    await ctx.reply(
+      'Seu Telegram ainda nao esta vinculado a uma conta do dashboard.\n' +
+      'Entre no dashboard, gere um codigo de vinculacao e envie aqui:\n' +
+      '/link SEU_CODIGO'
+    );
+  }
+
+  return userId;
 }
 
 function extrairNumero(...valores) {
@@ -71,8 +107,8 @@ function formatarLinhaTransacao(transacao) {
   return `${tipo} ${descricao} • ${categoria} • ${valor}${data ? ` • ${data}` : ''}`;
 }
 
-async function responderSaldo(ctx) {
-  const dadosSaldo = await buscarSaldo();
+async function responderSaldo(ctx, userId) {
+  const dadosSaldo = await buscarSaldo(userId);
   const { receitas, gastos, saldo } = normalizarSaldo(dadosSaldo);
 
   const mensagem = [
@@ -85,8 +121,8 @@ async function responderSaldo(ctx) {
   await ctx.reply(mensagem);
 }
 
-async function responderResumo(ctx) {
-  const dadosResumo = await buscarResumoMes();
+async function responderResumo(ctx, userId) {
+  const dadosResumo = await buscarResumoMes(userId);
   const { receitas, gastos, saldo, transacoes } = normalizarResumo(dadosResumo);
 
   const linhas = [
@@ -111,9 +147,13 @@ async function responderResumo(ctx) {
 bot.start(async (ctx) => {
   const mensagem = [
     'Oi! Eu sou seu bot de financas pessoais no Telegram.',
+    'Antes de tudo, vincule sua conta com /link CODIGO.',
     'Voce pode me mandar mensagens como:',
     '- "gastei 35 reais com almoco"',
     '- "recebi 1200 de freelance"',
+    '- "/add_expense 35 Alimentacao almoco"',
+    '- "/add_income 1200 Salario salario do mes"',
+    '- "/add_bill Netflix 39.90 2026-05-01 monthly"',
     '- "qual meu saldo"',
     '- "resumo do mes"',
     'Tambem posso responder aos comandos /saldo e /resumo.'
@@ -122,9 +162,39 @@ bot.start(async (ctx) => {
   await ctx.reply(mensagem);
 });
 
+bot.command('link', async (ctx) => {
+  const args = parseCommandArgs(ctx.message.text || '');
+  const codigo = args[0];
+
+  if (!codigo) {
+    await ctx.reply('Use o formato: /link SEU_CODIGO');
+    return;
+  }
+
+  try {
+    const vinculo = await vincularTelegramPorCodigo(ctx.chat.id, codigo);
+
+    if (!vinculo) {
+      await ctx.reply('Codigo invalido ou expirado. Gere um novo codigo no dashboard.');
+      return;
+    }
+
+    await ctx.reply('Conta vinculada com sucesso. Agora voce ja pode registrar e consultar seus dados.');
+  } catch (error) {
+    console.error('Erro ao vincular Telegram:', error.message);
+    await ctx.reply('Nao consegui vincular agora. Tente novamente em instantes.');
+  }
+});
+
 bot.command('saldo', async (ctx) => {
   try {
-    await responderSaldo(ctx);
+    const userId = await obterUserIdTelegram(ctx);
+
+    if (!userId) {
+      return;
+    }
+
+    await responderSaldo(ctx, userId);
   } catch (error) {
     console.error('Erro no comando /saldo:', error.message);
     await ctx.reply('Nao consegui buscar seu saldo agora. Tente novamente em instantes.');
@@ -133,10 +203,100 @@ bot.command('saldo', async (ctx) => {
 
 bot.command('resumo', async (ctx) => {
   try {
-    await responderResumo(ctx);
+    const userId = await obterUserIdTelegram(ctx);
+
+    if (!userId) {
+      return;
+    }
+
+    await responderResumo(ctx, userId);
   } catch (error) {
     console.error('Erro no comando /resumo:', error.message);
     await ctx.reply('Nao consegui montar o resumo agora. Tente novamente em instantes.');
+  }
+});
+
+bot.command('add_expense', async (ctx) => {
+  const userId = await obterUserIdTelegram(ctx);
+
+  if (!userId) {
+    return;
+  }
+
+  const args = parseCommandArgs(ctx.message.text || '');
+  const valor = parseMoney(args[0]);
+  const categoria = args[1] || 'Outros';
+  const descricao = args.slice(2).join(' ') || 'Despesa registrada pelo bot';
+
+  if (!valor) {
+    await ctx.reply('Use o formato: /add_expense 35 Alimentacao almoco');
+    return;
+  }
+
+  try {
+    await salvarTransacao(userId, 'expense', valor, categoria, descricao);
+    await ctx.reply(`Despesa registrada: ${formatarMoeda(valor)} em ${categoria}.`);
+  } catch (error) {
+    console.error('Erro em /add_expense:', error.message);
+    await ctx.reply('Nao consegui registrar a despesa agora.');
+  }
+});
+
+bot.command('add_income', async (ctx) => {
+  const userId = await obterUserIdTelegram(ctx);
+
+  if (!userId) {
+    return;
+  }
+
+  const args = parseCommandArgs(ctx.message.text || '');
+  const valor = parseMoney(args[0]);
+  const categoria = args[1] || 'Outros';
+  const descricao = args.slice(2).join(' ') || 'Receita registrada pelo bot';
+
+  if (!valor) {
+    await ctx.reply('Use o formato: /add_income 1200 Salario salario do mes');
+    return;
+  }
+
+  try {
+    await salvarTransacao(userId, 'income', valor, categoria, descricao);
+    await ctx.reply(`Receita registrada: ${formatarMoeda(valor)} em ${categoria}.`);
+  } catch (error) {
+    console.error('Erro em /add_income:', error.message);
+    await ctx.reply('Nao consegui registrar a receita agora.');
+  }
+});
+
+bot.command('add_bill', async (ctx) => {
+  const userId = await obterUserIdTelegram(ctx);
+
+  if (!userId) {
+    return;
+  }
+
+  const args = parseCommandArgs(ctx.message.text || '');
+  const [nome, valorRaw, dueDate, frequency = 'monthly'] = args;
+  const valor = parseMoney(valorRaw);
+
+  if (!nome || !valor || !dueDate) {
+    await ctx.reply('Use o formato: /add_bill Netflix 39.90 2026-05-01 monthly');
+    return;
+  }
+
+  try {
+    await salvarBillSubscription(userId, {
+      name: nome,
+      amount: valor,
+      dueDate,
+      frequency,
+      status: 'pending'
+    });
+
+    await ctx.reply(`Conta/assinatura registrada: ${nome} • ${formatarMoeda(valor)} • vence em ${dueDate}.`);
+  } catch (error) {
+    console.error('Erro em /add_bill:', error.message);
+    await ctx.reply('Nao consegui registrar a conta/assinatura agora.');
   }
 });
 
@@ -148,6 +308,12 @@ bot.on('text', async (ctx) => {
   }
 
   try {
+    const userId = await obterUserIdTelegram(ctx);
+
+    if (!userId) {
+      return;
+    }
+
     const interpretacao = await interpretarMensagem(texto);
 
     if (!interpretacao) {
@@ -157,12 +323,12 @@ bot.on('text', async (ctx) => {
 
     if (interpretacao.ehConsulta) {
       if (interpretacao.tipoConsulta === 'saldo') {
-        await responderSaldo(ctx);
+        await responderSaldo(ctx, userId);
         return;
       }
 
       if (interpretacao.tipoConsulta === 'resumo') {
-        await responderResumo(ctx);
+        await responderResumo(ctx, userId);
         return;
       }
 
@@ -171,6 +337,7 @@ bot.on('text', async (ctx) => {
     }
 
     await salvarTransacao(
+      userId,
       interpretacao.tipo,
       interpretacao.valor,
       interpretacao.categoria,

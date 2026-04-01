@@ -1,6 +1,59 @@
 require('dotenv').config();
 
+const crypto = require('crypto');
 const { bot, webhookSecret } = require('../src/bot');
+
+const RATE_WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS_PER_IP = 30;
+const requestStore = new Map();
+
+function responderJson(res, statusCode, payload) {
+  res.statusCode = statusCode;
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'no-store');
+  res.end(JSON.stringify(payload));
+}
+
+function compararSegredoRecebido(secretHeader, expectedSecret) {
+  if (!secretHeader || !expectedSecret) {
+    return false;
+  }
+
+  const left = Buffer.from(String(secretHeader), 'utf8');
+  const right = Buffer.from(String(expectedSecret), 'utf8');
+
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(left, right);
+}
+
+function obterIp(req) {
+  const forwardedFor = req.headers['x-forwarded-for'];
+
+  if (typeof forwardedFor === 'string' && forwardedFor.trim()) {
+    return forwardedFor.split(',')[0].trim();
+  }
+
+  return req.socket && req.socket.remoteAddress ? req.socket.remoteAddress : 'unknown';
+}
+
+function rateLimited(req) {
+  const ip = obterIp(req);
+  const now = Date.now();
+  const current = requestStore.get(ip) || [];
+  const valid = current.filter((timestamp) => now - timestamp < RATE_WINDOW_MS);
+
+  if (valid.length >= MAX_REQUESTS_PER_IP) {
+    requestStore.set(ip, valid);
+    return true;
+  }
+
+  valid.push(now);
+  requestStore.set(ip, valid);
+  return false;
+}
 
 async function lerCorpo(req) {
   if (req.body && typeof req.body === 'object') {
@@ -21,20 +74,26 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.statusCode = 405;
     res.setHeader('Allow', 'POST');
+    res.setHeader('Cache-Control', 'no-store');
     res.end('Method Not Allowed');
     return;
   }
 
-  if (webhookSecret) {
-    const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
+  if (!webhookSecret) {
+    responderJson(res, 500, { ok: false, error: 'webhook_secret_missing' });
+    return;
+  }
 
-    // Accept missing header for now so the bot can operate even if the
-    // Telegram webhook was registered without a secret token.
-    if (secretHeader && secretHeader !== webhookSecret) {
-      res.statusCode = 401;
-      res.end('Unauthorized');
-      return;
-    }
+  if (rateLimited(req)) {
+    responderJson(res, 429, { ok: false, error: 'rate_limited' });
+    return;
+  }
+
+  const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
+
+  if (!compararSegredoRecebido(secretHeader, webhookSecret)) {
+    responderJson(res, 401, { ok: false, error: 'unauthorized' });
+    return;
   }
 
   try {
@@ -42,17 +101,13 @@ module.exports = async (req, res) => {
     await bot.handleUpdate(update, res);
 
     if (!res.writableEnded) {
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ ok: true }));
+      responderJson(res, 200, { ok: true });
     }
   } catch (error) {
     console.error('Erro ao processar webhook do Telegram:', error.message);
 
     if (!res.writableEnded) {
-      res.statusCode = 500;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ ok: false, error: 'internal_error' }));
+      responderJson(res, 500, { ok: false, error: 'internal_error' });
     }
   }
 };
