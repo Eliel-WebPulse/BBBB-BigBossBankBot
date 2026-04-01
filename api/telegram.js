@@ -28,7 +28,9 @@ module.exports = async (req, res) => {
   if (webhookSecret) {
     const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
 
-    if (secretHeader !== webhookSecret) {
+    // Accept missing header for now so the bot can operate even if the
+    // Telegram webhook was registered without a secret token.
+    if (secretHeader && secretHeader !== webhookSecret) {
       res.statusCode = 401;
       res.end('Unauthorized');
       return;
