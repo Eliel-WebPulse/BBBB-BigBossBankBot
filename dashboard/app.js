@@ -63,7 +63,35 @@ function formatCurrency(value) {
 }
 
 function formatDate(value) {
-  return new Date(value).toLocaleDateString('pt-BR');
+  return toDateParts(value).date.toLocaleDateString('pt-BR');
+}
+
+function toDateParts(value) {
+  if (typeof value === 'string') {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (match) {
+      const year = Number(match[1]);
+      const monthIndex = Number(match[2]) - 1;
+      const day = Number(match[3]);
+
+      return {
+        year,
+        monthIndex,
+        day,
+        date: new Date(year, monthIndex, day)
+      };
+    }
+  }
+
+  const date = new Date(value);
+
+  return {
+    year: date.getFullYear(),
+    monthIndex: date.getMonth(),
+    day: date.getDate(),
+    date
+  };
 }
 
 function loadConfig() {
@@ -179,14 +207,14 @@ function emptyArrayMessage(colspan, text) {
 }
 
 function entriesByYear(entries, year) {
-  return entries.filter((item) => new Date(item.date).getFullYear() === year);
+  return entries.filter((item) => toDateParts(item.date).year === year);
 }
 
 function groupMonthlySnapshots(entries, year, type) {
   return MONTHS.map((label, monthIndex) => {
     const monthEntries = entries.filter((item) => {
-      const date = new Date(item.date);
-      return date.getFullYear() === year && date.getMonth() === monthIndex && item.type === type;
+      const dateParts = toDateParts(item.date);
+      return dateParts.year === year && dateParts.monthIndex === monthIndex && item.type === type;
     });
 
     return {
@@ -422,11 +450,11 @@ function getCalendarEvents() {
   const current = new Date();
   return state.data.bills
     .filter((item) => {
-      const due = new Date(item.due_date);
-      return due.getMonth() === current.getMonth() && due.getFullYear() === current.getFullYear();
+      const due = toDateParts(item.due_date);
+      return due.monthIndex === current.getMonth() && due.year === current.getFullYear();
     })
     .reduce((acc, item) => {
-      const day = new Date(item.due_date).getDate();
+      const day = toDateParts(item.due_date).day;
       if (!acc[day]) {
         acc[day] = [];
       }
@@ -504,12 +532,23 @@ async function fetchAllData() {
     return;
   }
 
-  const [{ data: transactions }, { data: bills }, { data: assetsLiabilities }, { data: goals }] = await Promise.all([
+  const [
+    { data: transactions, error: transactionsError },
+    { data: bills, error: billsError },
+    { data: assetsLiabilities, error: assetsLiabilitiesError },
+    { data: goals, error: goalsError }
+  ] = await Promise.all([
     state.client.from('transactions').select('*').order('date', { ascending: false }),
     state.client.from('bills_subscriptions').select('*').order('due_date', { ascending: true }),
     state.client.from('assets_liabilities').select('*').order('date', { ascending: false }),
     state.client.from('goals').select('*').order('end_date', { ascending: false })
   ]);
+
+  const fetchError = transactionsError || billsError || assetsLiabilitiesError || goalsError;
+
+  if (fetchError) {
+    throw fetchError;
+  }
 
   state.data.transactions = transactions || [];
   state.data.bills = bills || [];

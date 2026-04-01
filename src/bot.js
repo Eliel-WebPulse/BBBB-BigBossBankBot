@@ -35,7 +35,17 @@ function formatarMoeda(valor) {
 }
 
 function parseMoney(valor) {
-  const numero = Number(String(valor || '').replace(',', '.'));
+  const texto = String(valor || '').trim();
+
+  if (!texto) {
+    return null;
+  }
+
+  const numeroNormalizado = texto.includes(',')
+    ? texto.replace(/\./g, '').replace(',', '.')
+    : texto.replace(/,/g, '');
+  const numero = Number(numeroNormalizado);
+
   return Number.isFinite(numero) ? numero : null;
 }
 
@@ -44,8 +54,8 @@ function parseCommandArgs(texto) {
 }
 
 function extrairPrimeiroNumero(texto) {
-  const match = String(texto || '').replace(',', '.').match(/-?\d+(?:\.\d+)?/);
-  return match ? Number(match[0]) : null;
+  const match = String(texto || '').match(/-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?|-?\d+(?:[.,]\d+)?/);
+  return match ? parseMoney(match[0]) : null;
 }
 
 async function obterUserIdTelegram(ctx) {

@@ -69,10 +69,8 @@ async function interpretarMensagem(texto) {
   }
 
   try {
-    const result = await model.generateContent(`Mensagem: "${texto.trim()}"`);
-    const raw = result.response.text();
-    console.log('GEMINI RAW:', raw);
-    const dados = JSON.parse(raw);
+    const result = await model.generateContent(`Mensagem do usuario: "${texto.trim()}"`);
+    const dados = JSON.parse(result.response.text());
 
     if (dados.ehConsulta === true) {
       if (dados.tipoConsulta === 'saldo' || dados.tipoConsulta === 'resumo') {

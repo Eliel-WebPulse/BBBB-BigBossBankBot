@@ -86,7 +86,7 @@ module.exports = async (req, res) => {
 
   const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
 
-  if (webhookSecret && secretHeader && !compararSegredoRecebido(secretHeader, webhookSecret)) {
+  if (webhookSecret && !compararSegredoRecebido(secretHeader, webhookSecret)) {
     responderJson(res, 401, { ok: false, error: 'unauthorized' });
     return;
   }

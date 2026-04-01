@@ -17,7 +17,12 @@ function normalizarDataISO(data = new Date()) {
     return data.slice(0, 10);
   }
 
-  return new Date(data).toISOString().slice(0, 10);
+  const date = new Date(data);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
 }
 
 function validarUserId(userId) {
@@ -288,8 +293,8 @@ async function buscarSaldo(userId) {
 async function buscarResumoMes(userId, dataBase = new Date()) {
   const ano = dataBase.getFullYear();
   const mes = dataBase.getMonth();
-  const inicio = new Date(ano, mes, 1).toISOString().slice(0, 10);
-  const fim = new Date(ano, mes + 1, 0).toISOString().slice(0, 10);
+  const inicio = normalizarDataISO(new Date(ano, mes, 1));
+  const fim = normalizarDataISO(new Date(ano, mes + 1, 0));
 
   const { data, error } = await supabase
     .from('transactions')
