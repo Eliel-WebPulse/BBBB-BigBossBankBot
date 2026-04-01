@@ -21,6 +21,10 @@ if (!token) {
 
 const bot = new Telegraf(token);
 
+function escolherMensagem(opcoes) {
+  return opcoes[Math.floor(Math.random() * opcoes.length)];
+}
+
 function formatarMoeda(valor) {
   const numero = Number(valor || 0);
 
@@ -113,8 +117,124 @@ function formatarLinhaTransacao(transacao) {
   return `${tipo} ${descricao} • ${categoria} • ${valor}${data ? ` • ${data}` : ''}`;
 }
 
-async function responderSaldo(ctx, userId) {
+function montarRespostaSaldoComPersonalidade(dadosSaldo) {
+  const { receitas, gastos, saldo } = normalizarSaldo(dadosSaldo);
+  const introducao = escolherMensagem([
+    '📊 Fiz as contas sem derrubar a calculadora, um milagre estatístico.',
+    '🧾 Abri o cofre dos números e trouxe a fofoca financeira.',
+    '😏 Dei uma espiada no seu saldo. Ele falou de você, inclusive.'
+  ]);
+  const comentarioFinal = saldo >= 0
+    ? escolherMensagem([
+      'Nada mal. O dinheiro ainda não pediu socorro.',
+      'Tá vivo, respirando e sem drama por enquanto.',
+      'Seguimos elegantes, sem vender o sofá.'
+    ])
+    : escolherMensagem([
+      'O saldo entrou no modo novela. Precisamos de um capítulo de recuperação.',
+      'Seu dinheiro foi passear e esqueceu de voltar.',
+      'A conta tá dramática, mas nada que a gente não dome.'
+    ]);
+
+  return [
+    introducao,
+    '',
+    `Receitas: ${formatarMoeda(receitas)}`,
+    `Gastos: ${formatarMoeda(gastos)}`,
+    `Saldo: ${formatarMoeda(saldo)}`,
+    '',
+    comentarioFinal
+  ].join('\n');
+}
+
+function montarRespostaResumoComPersonalidade(dadosResumo) {
+  const { receitas, gastos, saldo, transacoes } = normalizarResumo(dadosResumo);
+  const abertura = escolherMensagem([
+    '🧠 Resumo do mês saindo do forno, sem açúcar mas com verdade.',
+    '📅 Passei pente fino no mês. Os números não mentem, só constrangem às vezes.',
+    '😌 Aqui vai o raio-x do mês, com um leve julgamento embutido.'
+  ]);
+
+  const linhas = [
+    abertura,
+    '',
+    `Receitas: ${formatarMoeda(receitas)}`,
+    `Gastos: ${formatarMoeda(gastos)}`,
+    `Saldo: ${formatarMoeda(saldo)}`
+  ];
+
+  if (transacoes.length > 0) {
+    linhas.push('', 'Movimentações mais recentes:');
+    transacoes.slice(0, 5).forEach((transacao) => {
+      linhas.push(formatarLinhaTransacao(transacao));
+    });
+  } else {
+    linhas.push('', 'Silêncio absoluto. Nem receita, nem gasto, nem emoção.');
+  }
+
+  linhas.push('', escolherMensagem([
+    'Se quiser, manda mais um gasto aí e vamos alimentando o caos com método.',
+    'Pode continuar. Eu organizo sua bagunça financeira com classe duvidosa.',
+    'Sigo de plantão, julgando em silêncio e registrando tudo.'
+  ]));
+
+  return linhas.join('\n');
+}
+
+function montarRespostaTransacaoComPersonalidade(interpretacao) {
+  const valor = formatarMoeda(interpretacao.valor);
+  const isReceita = interpretacao.tipo === 'receita';
+  const abertura = isReceita
+    ? escolherMensagem([
+      '💸✨ Olha só, entrou dinheiro. A conta até sorriu torto.',
+      '🤑 Receita registrada. O banco agradece o momento raro de esperança.',
+      '💰 Dinheiro na área. Finalmente uma notícia que não deprime a planilha.'
+    ])
+    : escolherMensagem([
+      '💳 Anotado. Seu dinheiro saiu de cena com grande dramaticidade.',
+      '😮‍💨 Gasto registrado. Mais um pequeno atentado contra a prosperidade.',
+      '🫠 Lancei a despesa. O orçamento sentiu, mas vai sobreviver.'
+    ]);
+
+  const fechamento = isReceita
+    ? escolherMensagem([
+      'Continue assim e talvez o saldo pare de viver perigosamente.',
+      'Do jeito que vai, até o extrato fica menos ofensivo.',
+      'Milagre financeiro detectado com sucesso.'
+    ])
+    : escolherMensagem([
+      'Tudo sob controle... eu acho.',
+      'Seguimos firmes, mesmo com o saldo levando dano crítico.',
+      'Respira. Foi só dinheiro. Provavelmente.'
+    ]);
+
+  return [
+    abertura,
+    '',
+    `Valor: ${valor}`,
+    `Categoria: ${interpretacao.categoria}`,
+    `Descrição: ${interpretacao.descricao}`,
+    '',
+    fechamento
+  ].join('\n');
+}
+
+function montarRespostaInvalidaComPersonalidade() {
+  return escolherMensagem([
+    '🤨 Entendi foi nada, campeão. Tenta algo como "gastei 42 com transporte" ou "qual meu saldo".',
+    '🫠 Isso aí ficou místico demais até pra mim. Me manda algo como "recebi 500" ou "resumo do mês".',
+    '😵 Meu talento é finanças, não adivinhação. Reformula com algo tipo "gastei 30 com almoço".'
+  ]);
+}
+
+async function responderSaldo(ctx, userId, options = {}) {
   const dadosSaldo = await buscarSaldo(userId);
+
+  if (options.comPersonalidade) {
+    await ctx.reply(montarRespostaSaldoComPersonalidade(dadosSaldo));
+    return;
+  }
+
   const { receitas, gastos, saldo } = normalizarSaldo(dadosSaldo);
 
   const mensagem = [
@@ -127,8 +247,14 @@ async function responderSaldo(ctx, userId) {
   await ctx.reply(mensagem);
 }
 
-async function responderResumo(ctx, userId) {
+async function responderResumo(ctx, userId, options = {}) {
   const dadosResumo = await buscarResumoMes(userId);
+
+  if (options.comPersonalidade) {
+    await ctx.reply(montarRespostaResumoComPersonalidade(dadosResumo));
+    return;
+  }
+
   const { receitas, gastos, saldo, transacoes } = normalizarResumo(dadosResumo);
 
   const linhas = [
@@ -150,12 +276,15 @@ async function responderResumo(ctx, userId) {
   await ctx.reply(linhas.join('\n'));
 }
 
-async function ajustarSaldoParaValor(ctx, userId, saldoDesejado) {
+async function ajustarSaldoParaValor(ctx, userId, saldoDesejado, options = {}) {
   const saldoAtual = await buscarSaldo(userId);
   const diferenca = Number((saldoDesejado - saldoAtual.saldo).toFixed(2));
 
   if (diferenca === 0) {
-    await ctx.reply(`Seu saldo ja esta em ${formatarMoeda(saldoDesejado)}.`);
+    const mensagem = options.comPersonalidade
+      ? `😌 Calma, gênio do equilíbrio: seu saldo já está em ${formatarMoeda(saldoDesejado)}. Nem precisei salvar o dia.`
+      : `Seu saldo ja esta em ${formatarMoeda(saldoDesejado)}.`;
+    await ctx.reply(mensagem);
     return true;
   }
 
@@ -170,10 +299,20 @@ async function ajustarSaldoParaValor(ctx, userId, saldoDesejado) {
     `Ajuste manual para saldo ${formatarMoeda(saldoDesejado)}`
   );
 
-  await ctx.reply(
-    `Saldo ajustado com sucesso para ${formatarMoeda(saldoDesejado)}.\n` +
-    `Lancamento criado: ${tipo === 'income' ? 'receita' : 'gasto'} de ${formatarMoeda(valorAjuste)}.`
-  );
+  const mensagem = options.comPersonalidade
+    ? [
+      `🎯 Pronto, ajeitei esse teatro financeiro para ${formatarMoeda(saldoDesejado)}.`,
+      `Lancei uma ${tipo === 'income' ? 'receita' : 'despesa'} de ${formatarMoeda(valorAjuste)}.`,
+      escolherMensagem([
+        'Agora o saldo parou de inventar moda.',
+        'Organizei a bagunça sem chamar reforço.',
+        'Seu extrato continua dramático, mas pelo menos coerente.'
+      ])
+    ].join('\n')
+    : `Saldo ajustado com sucesso para ${formatarMoeda(saldoDesejado)}.\n` +
+      `Lancamento criado: ${tipo === 'income' ? 'receita' : 'gasto'} de ${formatarMoeda(valorAjuste)}.`;
+
+  await ctx.reply(mensagem);
 
   return true;
 }
@@ -210,7 +349,7 @@ async function processarComandosFinanceirosNoTexto(ctx, texto, userId) {
   }
 
   if (ehPedidoDeZerarSaldo(texto)) {
-    await ajustarSaldoParaValor(ctx, userId, 0);
+    await ajustarSaldoParaValor(ctx, userId, 0, { comPersonalidade: true });
     return true;
   }
 
@@ -220,7 +359,7 @@ async function processarComandosFinanceirosNoTexto(ctx, texto, userId) {
     const saldoDesejado = parseMoney(matchAjuste[1]);
 
     if (saldoDesejado !== null) {
-      await ajustarSaldoParaValor(ctx, userId, saldoDesejado);
+      await ajustarSaldoParaValor(ctx, userId, saldoDesejado, { comPersonalidade: true });
       return true;
     }
   }
@@ -468,22 +607,22 @@ bot.on('text', async (ctx) => {
     const interpretacao = await interpretarMensagem(texto);
 
     if (!interpretacao) {
-      await ctx.reply('Nao entendi muito bem. Tente reformular, por exemplo: "gastei 42 com transporte" ou "qual meu saldo".');
+      await ctx.reply(montarRespostaInvalidaComPersonalidade());
       return;
     }
 
     if (interpretacao.ehConsulta) {
       if (interpretacao.tipoConsulta === 'saldo') {
-        await responderSaldo(ctx, userId);
+        await responderSaldo(ctx, userId, { comPersonalidade: true });
         return;
       }
 
       if (interpretacao.tipoConsulta === 'resumo') {
-        await responderResumo(ctx, userId);
+        await responderResumo(ctx, userId, { comPersonalidade: true });
         return;
       }
 
-      await ctx.reply('Entendi que voce quer consultar algo, mas preciso que voce reformule a mensagem.');
+      await ctx.reply('🤔 Quase entendi sua consulta, mas faltou um pouco menos de mistério. Tenta de novo.');
       return;
     }
 
@@ -495,15 +634,7 @@ bot.on('text', async (ctx) => {
       interpretacao.descricao
     );
 
-    const emoji = interpretacao.tipo === 'receita' ? '✅💰' : '✅💸';
-    const tipoLabel = interpretacao.tipo === 'receita' ? 'Receita' : 'Gasto';
-
-    await ctx.reply(
-      `${emoji} ${tipoLabel} registrada com sucesso!\n` +
-      `Valor: ${formatarMoeda(interpretacao.valor)}\n` +
-      `Categoria: ${interpretacao.categoria}\n` +
-      `Descricao: ${interpretacao.descricao}`
-    );
+    await ctx.reply(montarRespostaTransacaoComPersonalidade(interpretacao));
   } catch (error) {
     console.error('Erro ao processar mensagem:', error.message);
     await ctx.reply('Tive um problema para processar sua mensagem agora. Tente novamente daqui a pouco.');
