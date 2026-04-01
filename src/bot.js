@@ -38,6 +38,11 @@ function parseCommandArgs(texto) {
   return texto.trim().split(/\s+/).slice(1);
 }
 
+function extrairPrimeiroNumero(texto) {
+  const match = String(texto || '').replace(',', '.').match(/-?\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : null;
+}
+
 async function obterUserIdTelegram(ctx) {
   const chatId = ctx.chat && ctx.chat.id;
 
@@ -142,6 +147,84 @@ async function responderResumo(ctx, userId) {
   }
 
   await ctx.reply(linhas.join('\n'));
+}
+
+async function ajustarSaldoParaValor(ctx, userId, saldoDesejado) {
+  const saldoAtual = await buscarSaldo(userId);
+  const diferenca = Number((saldoDesejado - saldoAtual.saldo).toFixed(2));
+
+  if (diferenca === 0) {
+    await ctx.reply(`Seu saldo ja esta em ${formatarMoeda(saldoDesejado)}.`);
+    return true;
+  }
+
+  const tipo = diferenca > 0 ? 'income' : 'expense';
+  const valorAjuste = Math.abs(diferenca);
+
+  await salvarTransacao(
+    userId,
+    tipo,
+    valorAjuste,
+    'Ajuste',
+    `Ajuste manual para saldo ${formatarMoeda(saldoDesejado)}`
+  );
+
+  await ctx.reply(
+    `Saldo ajustado com sucesso para ${formatarMoeda(saldoDesejado)}.\n` +
+    `Lancamento criado: ${tipo === 'income' ? 'receita' : 'gasto'} de ${formatarMoeda(valorAjuste)}.`
+  );
+
+  return true;
+}
+
+function ehPedidoDeZerarSaldo(texto) {
+  const frase = String(texto || '').trim().toLowerCase();
+
+  return [
+    'zera meu saldo',
+    'zerar meu saldo',
+    'zera saldo',
+    'zerar saldo',
+    'deixe meu saldo em 0',
+    'saldo 0',
+    'saldo = 0',
+    'saldo zero',
+    'zere tudo'
+  ].some((termo) => frase.includes(termo));
+}
+
+async function processarComandosFinanceirosNoTexto(ctx, texto, userId) {
+  const frase = String(texto || '').trim().toLowerCase();
+
+  if (frase.startsWith('/ajustar_saldo')) {
+    const saldoDesejado = parseMoney(parseCommandArgs(texto)[0]);
+
+    if (saldoDesejado === null) {
+      await ctx.reply('Use o formato: /ajustar_saldo 0');
+      return true;
+    }
+
+    await ajustarSaldoParaValor(ctx, userId, saldoDesejado);
+    return true;
+  }
+
+  if (ehPedidoDeZerarSaldo(texto)) {
+    await ajustarSaldoParaValor(ctx, userId, 0);
+    return true;
+  }
+
+  const matchAjuste = frase.match(/(?:ajustar saldo|deixar saldo|saldo final)\s*(?:em|para|=)?\s*(-?\d+(?:[.,]\d+)?)/i);
+
+  if (matchAjuste) {
+    const saldoDesejado = parseMoney(matchAjuste[1]);
+
+    if (saldoDesejado !== null) {
+      await ajustarSaldoParaValor(ctx, userId, saldoDesejado);
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bot.start(async (ctx) => {
@@ -316,29 +399,7 @@ bot.command('ajustar_saldo', async (ctx) => {
   }
 
   try {
-    const saldoAtual = await buscarSaldo(userId);
-    const diferenca = Number((saldoDesejado - saldoAtual.saldo).toFixed(2));
-
-    if (diferenca === 0) {
-      await ctx.reply(`Seu saldo ja esta em ${formatarMoeda(saldoDesejado)}.`);
-      return;
-    }
-
-    const tipo = diferenca > 0 ? 'income' : 'expense';
-    const valorAjuste = Math.abs(diferenca);
-
-    await salvarTransacao(
-      userId,
-      tipo,
-      valorAjuste,
-      'Ajuste',
-      `Ajuste manual para saldo ${formatarMoeda(saldoDesejado)}`
-    );
-
-    await ctx.reply(
-      `Saldo ajustado com sucesso para ${formatarMoeda(saldoDesejado)}.\n` +
-      `Lancamento criado: ${tipo === 'income' ? 'receita' : 'gasto'} de ${formatarMoeda(valorAjuste)}.`
-    );
+    await ajustarSaldoParaValor(ctx, userId, saldoDesejado);
   } catch (error) {
     console.error('Erro em /ajustar_saldo:', error.message);
     await ctx.reply('Nao consegui ajustar o saldo agora. Tente novamente em instantes.');
@@ -356,6 +417,10 @@ bot.on('text', async (ctx) => {
     const userId = await obterUserIdTelegram(ctx);
 
     if (!userId) {
+      return;
+    }
+
+    if (await processarComandosFinanceirosNoTexto(ctx, texto, userId)) {
       return;
     }
 
