@@ -247,17 +247,24 @@ bot.start(async (ctx) => {
   }
 
   const mensagem = [
-    'Oi! Eu sou seu bot de financas pessoais no Telegram.',
-    'Antes de tudo, vincule sua conta com o link do dashboard ou com /link CODIGO.',
-    'Voce pode me mandar mensagens como:',
-    '- "gastei 35 reais com almoco"',
-    '- "recebi 1200 de freelance"',
-    '- "/add_expense 35 Alimentacao almoco"',
-    '- "/add_income 1200 Salario salario do mes"',
-    '- "/add_bill Netflix 39.90 2026-05-01 monthly"',
-    '- "qual meu saldo"',
-    '- "resumo do mes"',
-    'Tambem posso responder aos comandos /saldo e /resumo.'
+    'Olá! Eu sou o FinnBot, seu assistente de finanças no Telegram.',
+    '',
+    'Para começar:',
+    '1. Vincule sua conta pelo link do dashboard',
+    '2. Ou envie /link CODIGO',
+    '',
+    'Depois disso, você pode me mandar mensagens como:',
+    '• gastei 35 com almoço',
+    '• recebi 1200 de freelance',
+    '• qual meu saldo',
+    '• resumo do mês',
+    '',
+    'Se preferir comandos:',
+    '• /saldo',
+    '• /resumo',
+    '• /ajustar_saldo 0',
+    '',
+    'Se quiser, já pode começar me dizendo um gasto ou uma receita.'
   ].join('\n');
 
   await ctx.reply(mensagem);
