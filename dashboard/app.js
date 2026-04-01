@@ -35,6 +35,7 @@ const els = {
   generateLinkBtn: document.getElementById('generateLinkBtn'),
   openTelegramLinkBtn: document.getElementById('openTelegramLinkBtn'),
   linkCode: document.getElementById('linkCode'),
+  financeHint: document.getElementById('financeHint'),
   currentBalance: document.getElementById('currentBalance'),
   totalIncome: document.getElementById('totalIncome'),
   totalExpense: document.getElementById('totalExpense'),
@@ -400,11 +401,22 @@ function buildChart(name, config) {
 function renderFinanceSection() {
   const resumo = summarizeTransactions(state.data.transactions);
   const series = buildMonthlyTransactionSeries(state.data.transactions, state.selectedYear);
+  const temVinculoTelegram = Boolean(state.data.telegramLink && state.data.telegramLink.chat_id);
 
   els.currentBalance.textContent = formatCurrency(resumo.saldo);
   els.totalIncome.textContent = formatCurrency(resumo.receitas);
   els.totalExpense.textContent = formatCurrency(resumo.gastos);
   els.transactionCount.textContent = String(state.data.transactions.length);
+
+  if (!state.user) {
+    els.financeHint.textContent = 'Faça login para carregar suas transações do Telegram.';
+  } else if (!temVinculoTelegram) {
+    els.financeHint.textContent = 'Esta conta ainda não está vinculada ao Telegram. Gere um código e abra o bot para conectar este dashboard.';
+  } else if (!state.data.transactions.length) {
+    els.financeHint.textContent = 'Esta conta está vinculada, mas ainda não tem transações. Se o bot mostra saldo em outra conta, gere um novo código aqui e abra no Telegram para relincular o chat.';
+  } else {
+    els.financeHint.textContent = 'Dados sincronizados com a conta vinculada ao seu Telegram.';
+  }
 
   buildChart('cashflowChart', {
     type: 'line',
@@ -770,9 +782,9 @@ async function generateTelegramCode() {
   const deepLink = buildTelegramDeepLink(code);
 
   if (deepLink) {
-    notify(`Codigo gerado: ${code}. Agora clique em "Abrir no Telegram".`);
+    notify(`Codigo gerado: ${code}. Agora clique em "Abrir no Telegram". Isso também religa este chat à conta atual do dashboard.`);
   } else {
-    notify(`Codigo gerado: ${code}. Preencha o username do bot para abrir o Telegram direto, ou envie /link ${code} manualmente.`);
+    notify(`Codigo gerado: ${code}. Preencha o username do bot para abrir o Telegram direto, ou envie /link ${code} manualmente. Isso também religa este chat à conta atual do dashboard.`);
   }
 }
 

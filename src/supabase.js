@@ -237,6 +237,19 @@ async function vincularTelegramPorCodigo(chatId, codigo) {
     return null;
   }
 
+  const { error: clearExistingLinkError } = await supabase
+    .from('telegram_links')
+    .update({
+      chat_id: null,
+      linked_at: null
+    })
+    .eq('chat_id', String(chatId))
+    .neq('id', linkData.id);
+
+  if (clearExistingLinkError) {
+    throw clearExistingLinkError;
+  }
+
   const { data, error } = await supabase
     .from('telegram_links')
     .update({
