@@ -58,6 +58,7 @@ create table if not exists public.goals (
   net_worth_goal numeric(14, 2) not null check (net_worth_goal >= 0),
   start_date date not null,
   end_date date not null,
+  constraint goals_valid_date_range check (end_date >= start_date),
   created_at timestamptz not null default now()
 );
 
@@ -74,6 +75,7 @@ create index if not exists idx_transactions_user_date on public.transactions (us
 create index if not exists idx_bills_user_due_date on public.bills_subscriptions (user_id, due_date asc);
 create index if not exists idx_assets_user_date on public.assets_liabilities (user_id, date desc);
 create index if not exists idx_goals_user_dates on public.goals (user_id, end_date desc);
+create unique index if not exists idx_goals_user_end_date_unique on public.goals (user_id, end_date);
 
 alter table public.transactions enable row level security;
 alter table public.bills_subscriptions enable row level security;
