@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finn Dashboard</title>
+  <style>
+    :root {
+      --bg: #f5efe3;
+      --surface: rgba(255, 252, 245, 0.82);
+      --surface-strong: #fffaf0;
+      --border: rgba(66, 47, 18, 0.1);
+      --text: #1f1a14;
+      --muted: #6c6257;
+      --primary: #1f7a5c;
+      --primary-soft: #d6efe5;
+      --danger: #c85d3a;
+      --danger-soft: #fde3db;
+      --warning: #d1962d;
+      --shadow: 0 24px 60px rgba(74, 56, 24, 0.14);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --gap: 24px;
+      --font-display: "Segoe UI", "Trebuchet MS", sans-serif;
+      --font-body: "Segoe UI", Tahoma, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(31, 122, 92, 0.18), transparent 32%),
+        radial-gradient(circle at 85% 15%, rgba(209, 150, 45, 0.2), transparent 24%),
+        linear-gradient(180deg, #f9f3e8 0%, var(--bg) 45%, #efe7d7 100%);
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      border-radius: 999px;
+      filter: blur(16px);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      width: 320px;
+      height: 320px;
+      left: -80px;
+      bottom: 10%;
+      background: rgba(31, 122, 92, 0.12);
+    }
+
+    body::after {
+      width: 280px;
+      height: 280px;
+      right: -60px;
+      top: 18%;
+      background: rgba(200, 93, 58, 0.12);
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+
+    .glass {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: var(--gap);
+      margin-bottom: 24px;
+    }
+
+    .hero-card,
+    .panel,
+    .mini-card {
+      border-radius: var(--radius-xl);
+    }
+
+    .hero-card,
+    .panel {
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -8% -40% auto;
+      width: 240px;
+      height: 240px;
+      background: radial-gradient(circle, rgba(31, 122, 92, 0.18), transparent 70%);
+      border-radius: 50%;
+    }
+
+    .eyebrow,
+    .panel-tag,
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(31, 26, 20, 0.08);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      font-family: var(--font-display);
+      line-height: 1;
+    }
+
+    h1 {
+      margin-top: 18px;
+      font-size: clamp(2.3rem, 5vw, 4.5rem);
+      letter-spacing: -0.05em;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-copy,
+    .panel-subtitle,
+    .helper,
+    .muted {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .hero-copy { max-width: 640px; margin-top: 16px; }
+
+    .hero-meta,
+    .actions,
+    .mini-grid,
+    .legend,
+    .compare-chart,
+    .config-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .meta-pill {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(31, 26, 20, 0.06);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .hero-summary {
+      display: grid;
+      gap: 18px;
+      padding: 24px;
+      border-radius: var(--radius-xl);
+    }
+
+    .saldo-card {
+      padding: 24px;
+      background: linear-gradient(145deg, #1f7a5c, #135340);
+      color: #f8fff7;
+      border-radius: var(--radius-xl);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .saldo-card::after {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      right: -40px;
+      top: -40px;
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .label {
+      font-size: 0.84rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.82;
+    }
+
+    .saldo-value {
+      margin-top: 10px;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 700;
+      letter-spacing: -0.06em;
+    }
+
+    .saldo-foot { margin-top: 10px; color: rgba(248, 255, 247, 0.84); }
+
+    .mini-grid { grid-template-columns: repeat(2, 1fr); }
+
+    .mini-card {
+      padding: 18px;
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+    }
+
+    .mini-card strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 1.45rem;
+      letter-spacing: -0.04em;
+    }
+
+    .mini-card.receitas {
+      background: linear-gradient(180deg, rgba(214, 239, 229, 0.95), rgba(255, 250, 240, 0.92));
+    }
+
+    .mini-card.gastos {
+      background: linear-gradient(180deg, rgba(253, 227, 219, 0.95), rgba(255, 250, 240, 0.92));
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--gap);
+    }
+
+    .span-5 { grid-column: span 5; }
+    .span-7 { grid-column: span 7; }
+    .span-12 { grid-column: span 12; }
+
+    .panel-head,
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .donut-wrap {
+      display: grid;
+      grid-template-columns: minmax(240px, 320px) 1fr;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .donut {
+      width: min(100%, 320px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      position: relative;
+      margin: 0 auto;
+      background: conic-gradient(#1f7a5c 0deg 90deg, #d1962d 90deg 180deg, #c85d3a 180deg 260deg, #3e8ecf 260deg 360deg);
+      box-shadow: inset 0 0 0 1px rgba(31, 26, 20, 0.05);
+    }
+
+    .donut::before {
+      content: "";
+      position: absolute;
+      inset: 18%;
+      border-radius: 50%;
+      background: linear-gradient(180deg, rgba(255, 250, 240, 0.95), rgba(250, 244, 232, 0.96));
+      box-shadow: inset 0 0 0 1px rgba(31, 26, 20, 0.05);
+    }
+
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 0 58px;
+      z-index: 1;
+    }
+
+    .donut-center strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.65rem;
+      letter-spacing: -0.05em;
+    }
+
+    .legend-item,
+    .config-panel,
+    .table-shell,
+    .bar-shell {
+      border-radius: 20px;
+    }
+
+    .legend-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.64);
+      border: 1px solid rgba(31, 26, 20, 0.06);
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+    }
+
+    .compare-chart {
+      grid-template-columns: repeat(2, 1fr);
+      align-items: end;
+      min-height: 320px;
+      gap: 24px;
+    }
+
+    .bar-group {
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+    }
+
+    .bar-shell {
+      width: min(160px, 100%);
+      height: 230px;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      padding: 12px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(245, 239, 227, 0.76));
+      border: 1px solid rgba(31, 26, 20, 0.06);
+    }
+
+    .bar {
+      width: 100%;
+      min-height: 12%;
+      border-radius: 22px 22px 10px 10px;
+      position: relative;
+      transform-origin: bottom;
+    }
+
+    .bar.receitas { background: linear-gradient(180deg, #5cc9a4, #1f7a5c); }
+    .bar.gastos { background: linear-gradient(180deg, #f09b7e, #c85d3a); }
+
+    .bar-value {
+      position: absolute;
+      top: 14px;
+      inset-inline: 0;
+      text-align: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .bar-label { text-align: center; }
+    .bar-label strong { display: block; margin-bottom: 6px; }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--warning);
+      box-shadow: 0 0 0 6px rgba(209, 150, 45, 0.12);
+    }
+
+    .status-dot.live {
+      background: var(--primary);
+      box-shadow: 0 0 0 6px rgba(31, 122, 92, 0.12);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .btn,
+    .field input {
+      font: inherit;
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+
+    .btn {
+      border: 0;
+      cursor: pointer;
+      transition: transform 180ms ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--text); color: #fffaf0; }
+    .btn-secondary { background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(31, 26, 20, 0.08); }
+
+    .config-panel {
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px dashed rgba(31, 26, 20, 0.12);
+      background: rgba(255, 255, 255, 0.42);
+      display: none;
+    }
+
+    .config-panel.open { display: block; }
+    .config-grid { grid-template-columns: repeat(3, 1fr); margin-top: 14px; }
+    .field { display: grid; gap: 8px; }
+    .field label { font-size: 0.85rem; color: var(--muted); }
+    .field input { width: 100%; border: 1px solid rgba(31, 26, 20, 0.08); background: rgba(255, 255, 255, 0.85); color: var(--text); }
+
+    .table-shell {
+      overflow: hidden;
+      border: 1px solid rgba(31, 26, 20, 0.06);
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+      text-align: left;
+      padding: 16px 18px;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(250, 244, 232, 0.86);
+    }
+
+    tbody td {
+      padding: 18px;
+      border-top: 1px solid rgba(31, 26, 20, 0.06);
+      vertical-align: middle;
+    }
+
+    .tipo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+
+    .tipo-badge.receita { color: #0f5c44; background: var(--primary-soft); }
+    .tipo-badge.gasto { color: #8b3a20; background: var(--danger-soft); }
+    .valor.receita { color: var(--primary); font-weight: 700; }
+    .valor.gasto { color: var(--danger); font-weight: 700; }
+    .empty { padding: 24px; text-align: center; color: var(--muted); }
+
+    @media (max-width: 1080px) {
+      .hero { grid-template-columns: 1fr; }
+      .span-5, .span-7, .span-12 { grid-column: span 12; }
+      .donut-wrap, .config-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .page { padding: 18px 14px 28px; }
+      .mini-grid, .compare-chart { grid-template-columns: 1fr; }
+      .toolbar { align-items: stretch; }
+      .actions { width: 100%; }
+      .actions .btn { flex: 1 1 auto; }
+      table, thead, tbody, tr, th, td { display: block; }
+      thead { display: none; }
+      tbody td { padding: 10px 0; border-top: 0; }
+      tbody td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.76rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <article class="hero-card glass">
+        <span class="eyebrow">Finn Finance Dashboard</span>
+        <h1>Controle financeiro com visual limpo, forte e pronto para Vercel.</h1>
+        <p class="hero-copy">
+          Este dashboard standalone foi pensado para hospedagem estática gratuita.
+          Ele destaca o saldo atual, compara receitas e gastos, distribui despesas por categoria
+          e mantém um histórico completo de transações em uma única página.
+        </p>
+        <div class="hero-meta">
+          <div class="meta-pill">Hospedagem estática na Vercel</div>
+          <div class="meta-pill">Sem build obrigatório</div>
+          <div class="meta-pill">Modo demo e modo Supabase</div>
+        </div>
+      </article>
+
+      <aside class="hero-summary glass">
+        <div class="saldo-card">
+          <div class="label">Saldo atual</div>
+          <div id="saldoAtual" class="saldo-value">R$ 0,00</div>
+          <div id="saldoResumo" class="saldo-foot">Aguardando dados financeiros.</div>
+        </div>
+
+        <div class="mini-grid">
+          <div class="mini-card receitas">
+            <div class="label">Receitas</div>
+            <strong id="totalReceitas">R$ 0,00</strong>
+            <span class="muted">Entradas acumuladas</span>
+          </div>
+
+          <div class="mini-card gastos">
+            <div class="label">Gastos</div>
+            <strong id="totalGastos">R$ 0,00</strong>
+            <span class="muted">Saídas acumuladas</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="panel glass span-5">
+        <div class="panel-head">
+          <div>
+            <h2>Gastos por categoria</h2>
+            <p class="panel-subtitle">Distribuição visual das categorias que mais pesam no mês.</p>
+          </div>
+          <span id="categoriaTag" class="panel-tag">Modo demo</span>
+        </div>
+
+        <div class="donut-wrap">
+          <div id="donutChart" class="donut">
+            <div class="donut-center">
+              <div class="label">Maior categoria</div>
+              <strong id="topCategoria">Sem dados</strong>
+            </div>
+          </div>
+
+          <div id="categoriaLegenda" class="legend"></div>
+        </div>
+      </article>
+
+      <article class="panel glass span-7">
+        <div class="panel-head">
+          <div>
+            <h2>Receitas vs gastos</h2>
+            <p class="panel-subtitle">Comparativo direto para acompanhar sua margem e ritmo financeiro.</p>
+          </div>
+          <span class="panel-tag">Visão consolidada</span>
+        </div>
+
+        <div class="compare-chart">
+          <div class="bar-group">
+            <div class="bar-shell">
+              <div id="barReceitas" class="bar receitas" style="height: 20%;">
+                <div id="barReceitasValor" class="bar-value">R$ 0,00</div>
+              </div>
+            </div>
+            <div class="bar-label">
+              <strong>Receitas</strong>
+              <span class="muted">Entradas totais</span>
+            </div>
+          </div>
+
+          <div class="bar-group">
+            <div class="bar-shell">
+              <div id="barGastos" class="bar gastos" style="height: 20%;">
+                <div id="barGastosValor" class="bar-value">R$ 0,00</div>
+              </div>
+            </div>
+            <div class="bar-label">
+              <strong>Gastos</strong>
+              <span class="muted">Saídas totais</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel glass span-12">
+        <div class="toolbar">
+          <div id="statusConexao" class="status">
+            <span id="statusDot" class="status-dot"></span>
+            <span id="statusTexto">Usando dados de demonstração</span>
+          </div>
+
+          <div class="actions">
+            <button id="toggleConfig" class="btn btn-secondary" type="button">Configurar Supabase</button>
+            <button id="carregarDados" class="btn btn-primary" type="button">Atualizar dashboard</button>
+          </div>
+        </div>
+
+        <div id="configPanel" class="config-panel">
+          <h2>Conexão opcional com Supabase</h2>
+          <p class="panel-subtitle">
+            Para manter a página estática na Vercel, use apenas a URL do projeto e a chave pública anon.
+            Não coloque chave service role neste HTML.
+          </p>
+
+          <div class="config-grid">
+            <div class="field">
+              <label for="supabaseUrl">Supabase URL</label>
+              <input id="supabaseUrl" type="text" placeholder="https://seu-projeto.supabase.co" />
+            </div>
+
+            <div class="field">
+              <label for="supabaseKey">Supabase anon key</label>
+              <input id="supabaseKey" type="password" placeholder="Cole sua chave pública anon" />
+            </div>
+
+            <div class="field">
+              <label for="supabaseTable">Tabela</label>
+              <input id="supabaseTable" type="text" value="transacoes" />
+            </div>
+          </div>
+
+          <p class="helper">
+            O dashboard espera colunas compatíveis com seu bot atual: <code>tipo</code>, <code>valor</code>,
+            <code>categoria</code>, <code>descricao</code> e <code>data</code>.
+            As configurações ficam salvas apenas no navegador.
+          </p>
+        </div>
+
+        <div class="panel-head" style="margin-top: 24px;">
+          <div>
+            <h2>Histórico de transações</h2>
+            <p class="panel-subtitle">Lista cronológica com tipo, categoria, descrição, valor e data.</p>
+          </div>
+          <span id="transacoesResumo" class="panel-tag">0 registros</span>
+        </div>
+
+        <div class="table-shell">
+          <table>
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Data</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody id="transacoesBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "finn_dashboard_config";
+    const categoryColors = ["#1f7a5c", "#d1962d", "#c85d3a", "#3e8ecf", "#7d6db5", "#8f9d44", "#4d6775"];
+
+    const demoData = [
+      { tipo: "receita", valor: 4200, categoria: "Salario", descricao: "Salario mensal", data: "2026-04-01" },
+      { tipo: "gasto", valor: 58.9, categoria: "Alimentacao", descricao: "Almoco no centro", data: "2026-04-01" },
+      { tipo: "gasto", valor: 22.5, categoria: "Transporte", descricao: "Uber para reuniao", data: "2026-04-02" },
+      { tipo: "receita", valor: 780, categoria: "Freelance", descricao: "Landing page cliente", data: "2026-04-03" },
+      { tipo: "gasto", valor: 210, categoria: "Saude", descricao: "Farmacia", data: "2026-04-04" },
+      { tipo: "gasto", valor: 340, categoria: "Moradia", descricao: "Conta de energia", data: "2026-04-05" },
+      { tipo: "gasto", valor: 129.9, categoria: "Lazer", descricao: "Assinaturas e streaming", data: "2026-04-06" },
+      { tipo: "gasto", valor: 94, categoria: "Educacao", descricao: "Curso online", data: "2026-04-08" },
+      { tipo: "receita", valor: 210, categoria: "Investimentos", descricao: "Rendimento mensal", data: "2026-04-09" },
+      { tipo: "gasto", valor: 86.4, categoria: "Alimentacao", descricao: "Mercado", data: "2026-04-10" },
+      { tipo: "gasto", valor: 43, categoria: "Transporte", descricao: "Combustivel", data: "2026-04-11" }
+    ];
+
+    const elements = {
+      saldoAtual: document.getElementById("saldoAtual"),
+      saldoResumo: document.getElementById("saldoResumo"),
+      totalReceitas: document.getElementById("totalReceitas"),
+      totalGastos: document.getElementById("totalGastos"),
+      topCategoria: document.getElementById("topCategoria"),
+      categoriaLegenda: document.getElementById("categoriaLegenda"),
+      donutChart: document.getElementById("donutChart"),
+      categoriaTag: document.getElementById("categoriaTag"),
+      barReceitas: document.getElementById("barReceitas"),
+      barGastos: document.getElementById("barGastos"),
+      barReceitasValor: document.getElementById("barReceitasValor"),
+      barGastosValor: document.getElementById("barGastosValor"),
+      transacoesBody: document.getElementById("transacoesBody"),
+      transacoesResumo: document.getElementById("transacoesResumo"),
+      statusTexto: document.getElementById("statusTexto"),
+      statusDot: document.getElementById("statusDot"),
+      configPanel: document.getElementById("configPanel"),
+      toggleConfig: document.getElementById("toggleConfig"),
+      carregarDados: document.getElementById("carregarDados"),
+      supabaseUrl: document.getElementById("supabaseUrl"),
+      supabaseKey: document.getElementById("supabaseKey"),
+      supabaseTable: document.getElementById("supabaseTable")
+    };
+
+    function formatCurrency(value) {
+      return Number(value || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      });
+    }
+
+    function formatDate(value) {
+      if (!value) return "Sem data";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "Sem data";
+      return date.toLocaleDateString("pt-BR");
+    }
+
+    function loadConfig() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        elements.supabaseUrl.value = saved.url || "";
+        elements.supabaseKey.value = saved.key || "";
+        elements.supabaseTable.value = saved.table || "transacoes";
+      } catch (error) {
+        console.error("Erro ao ler configuracao local:", error);
+      }
+    }
+
+    function saveConfig() {
+      const config = {
+        url: elements.supabaseUrl.value.trim(),
+        key: elements.supabaseKey.value.trim(),
+        table: elements.supabaseTable.value.trim() || "transacoes"
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+      return config;
+    }
+
+    async function fetchSupabaseData(config) {
+      const url = config.url.replace(/\/+$/, "");
+      const endpoint = `${url}/rest/v1/${encodeURIComponent(config.table)}?select=tipo,valor,categoria,descricao,data&order=data.desc`;
+      const response = await fetch(endpoint, {
+        headers: {
+          apikey: config.key,
+          Authorization: `Bearer ${config.key}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Falha ao buscar dados: ${response.status}`);
+      }
+
+      return response.json();
+    }
+
+    function summarizeTransactions(transactions) {
+      const receitas = transactions.filter((item) => item.tipo === "receita").reduce((acc, item) => acc + Number(item.valor || 0), 0);
+      const gastos = transactions.filter((item) => item.tipo === "gasto").reduce((acc, item) => acc + Number(item.valor || 0), 0);
+      const byCategory = transactions.filter((item) => item.tipo === "gasto").reduce((acc, item) => {
+        const category = item.categoria || "Outros";
+        acc[category] = (acc[category] || 0) + Number(item.valor || 0);
+        return acc;
+      }, {});
+
+      const categories = Object.entries(byCategory).sort((a, b) => b[1] - a[1]).map(([name, total], index) => ({
+        name,
+        total,
+        color: categoryColors[index % categoryColors.length]
+      }));
+
+      return { receitas, gastos, saldo: receitas - gastos, categories };
+    }
+
+    function buildDonut(categories) {
+      if (!categories.length) {
+        elements.donutChart.style.background = "conic-gradient(#e6dcc8 0deg 360deg)";
+        elements.topCategoria.textContent = "Sem gastos";
+        elements.categoriaLegenda.innerHTML = '<div class="empty">Nenhuma categoria de gasto encontrada.</div>';
+        return;
+      }
+
+      const total = categories.reduce((sum, item) => sum + item.total, 0);
+      let startAngle = 0;
+      const gradientParts = categories.map((item) => {
+        const slice = (item.total / total) * 360;
+        const endAngle = startAngle + slice;
+        const part = `${item.color} ${startAngle.toFixed(1)}deg ${endAngle.toFixed(1)}deg`;
+        startAngle = endAngle;
+        return part;
+      });
+
+      elements.donutChart.style.background = `conic-gradient(${gradientParts.join(", ")})`;
+      elements.topCategoria.textContent = categories[0].name;
+      elements.categoriaLegenda.innerHTML = categories.map((item) => {
+        const percentage = total ? ((item.total / total) * 100).toFixed(1) : "0.0";
+        return `
+          <div class="legend-item">
+            <span class="legend-swatch" style="background:${item.color}"></span>
+            <div>
+              <div><strong>${item.name}</strong></div>
+              <div class="muted">${percentage}% do total</div>
+            </div>
+            <strong>${formatCurrency(item.total)}</strong>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderBars(receitas, gastos) {
+      const max = Math.max(receitas, gastos, 1);
+      elements.barReceitas.style.height = `${Math.max((receitas / max) * 100, 12)}%`;
+      elements.barGastos.style.height = `${Math.max((gastos / max) * 100, 12)}%`;
+      elements.barReceitasValor.textContent = formatCurrency(receitas);
+      elements.barGastosValor.textContent = formatCurrency(gastos);
+    }
+
+    function renderTable(transactions) {
+      if (!transactions.length) {
+        elements.transacoesBody.innerHTML = '<tr><td colspan="5" class="empty">Nenhuma transação encontrada.</td></tr>';
+        elements.transacoesResumo.textContent = "0 registros";
+        return;
+      }
+
+      elements.transacoesBody.innerHTML = transactions.map((item) => {
+        const tipo = item.tipo === "receita" ? "receita" : "gasto";
+        const label = tipo === "receita" ? "Receita" : "Gasto";
+        const emoji = tipo === "receita" ? "Entrada" : "Saída";
+        return `
+          <tr>
+            <td data-label="Tipo"><span class="tipo-badge ${tipo}">${emoji} ${label}</span></td>
+            <td data-label="Descrição"><strong>${item.descricao || "Sem descricao"}</strong></td>
+            <td data-label="Categoria"><span class="muted">${item.categoria || "Outros"}</span></td>
+            <td data-label="Data"><span class="muted">${formatDate(item.data)}</span></td>
+            <td data-label="Valor"><span class="valor ${tipo}">${formatCurrency(item.valor)}</span></td>
+          </tr>
+        `;
+      }).join("");
+
+      elements.transacoesResumo.textContent = `${transactions.length} registros`;
+    }
+
+    function renderDashboard(transactions, sourceLabel) {
+      const ordered = [...transactions].sort((a, b) => new Date(b.data || 0).getTime() - new Date(a.data || 0).getTime());
+      const summary = summarizeTransactions(ordered);
+
+      elements.totalReceitas.textContent = formatCurrency(summary.receitas);
+      elements.totalGastos.textContent = formatCurrency(summary.gastos);
+      elements.saldoAtual.textContent = formatCurrency(summary.saldo);
+      elements.saldoResumo.textContent = summary.saldo >= 0
+        ? `Você está operando com saldo positivo de ${formatCurrency(summary.saldo)}.`
+        : `Atenção: saldo negativo de ${formatCurrency(Math.abs(summary.saldo))}.`;
+
+      elements.categoriaTag.textContent = sourceLabel;
+      buildDonut(summary.categories);
+      renderBars(summary.receitas, summary.gastos);
+      renderTable(ordered);
+    }
+
+    function setStatus(text, isLive) {
+      elements.statusTexto.textContent = text;
+      elements.statusDot.classList.toggle("live", Boolean(isLive));
+    }
+
+    async function refreshDashboard() {
+      const config = saveConfig();
+
+      if (config.url && config.key) {
+        try {
+          const data = await fetchSupabaseData(config);
+          setStatus("Conectado ao Supabase em tempo real", true);
+          renderDashboard(data, "Supabase conectado");
+          return;
+        } catch (error) {
+          console.error(error);
+          setStatus("Falha ao conectar. Exibindo modo demo.", false);
+          renderDashboard(demoData, "Fallback demo");
+          return;
+        }
+      }
+
+      setStatus("Usando dados de demonstração", false);
+      renderDashboard(demoData, "Modo demo");
+    }
+
+    elements.toggleConfig.addEventListener("click", () => {
+      elements.configPanel.classList.toggle("open");
+    });
+
+    elements.carregarDados.addEventListener("click", refreshDashboard);
+
+    loadConfig();
+    refreshDashboard();
+  </script>
+</body>
+</html>
