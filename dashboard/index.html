@@ -22,6 +22,7 @@
 
       <nav class="sidebar-nav">
         <button class="sidebar-link active" data-target="tutorial">Primeiros passos</button>
+        <button class="sidebar-link" data-target="finance">Resumo financeiro</button>
         <button class="sidebar-link" data-target="yearly">Yearly tracker</button>
         <button class="sidebar-link" data-target="multi">Multiple year summary</button>
         <button class="sidebar-link" data-target="bills">Bills & subscriptions</button>
@@ -123,6 +124,59 @@
             <p>Use o bot ou o próprio Supabase para registrar transações, ativos, passivos, metas e assinaturas.</p>
           </article>
         </div>
+      </section>
+
+      <section id="finance" class="panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">Telegram Finance</span>
+            <h2>Resumo financeiro do bot</h2>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <article class="metric-card highlight">
+            <span>Saldo atual</span>
+            <strong id="currentBalance">R$ 0,00</strong>
+          </article>
+          <article class="metric-card">
+            <span>Receitas acumuladas</span>
+            <strong id="totalIncome">R$ 0,00</strong>
+          </article>
+          <article class="metric-card">
+            <span>Gastos acumulados</span>
+            <strong id="totalExpense">R$ 0,00</strong>
+          </article>
+          <article class="metric-card">
+            <span>Transações registradas</span>
+            <strong id="transactionCount">0</strong>
+          </article>
+        </div>
+
+        <div class="chart-grid">
+          <article class="chart-card wide">
+            <div class="card-title">Evolução mensal do saldo no ano selecionado</div>
+            <canvas id="cashflowChart"></canvas>
+          </article>
+        </div>
+
+        <article class="table-card" style="margin-top: 22px;">
+          <div class="card-title">Últimas transações</div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Categoria</th>
+                  <th>Descrição</th>
+                  <th>Valor</th>
+                  <th>Data</th>
+                </tr>
+              </thead>
+              <tbody id="transactionsTableBody"></tbody>
+            </table>
+          </div>
+        </article>
       </section>
 
       <section id="yearly" class="panel">

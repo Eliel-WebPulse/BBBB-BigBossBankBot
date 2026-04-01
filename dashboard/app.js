@@ -35,6 +35,10 @@ const els = {
   generateLinkBtn: document.getElementById('generateLinkBtn'),
   openTelegramLinkBtn: document.getElementById('openTelegramLinkBtn'),
   linkCode: document.getElementById('linkCode'),
+  currentBalance: document.getElementById('currentBalance'),
+  totalIncome: document.getElementById('totalIncome'),
+  totalExpense: document.getElementById('totalExpense'),
+  transactionCount: document.getElementById('transactionCount'),
   yearSelect: document.getElementById('yearSelect'),
   yearNetWorth: document.getElementById('yearNetWorth'),
   yearGoal: document.getElementById('yearGoal'),
@@ -46,6 +50,7 @@ const els = {
   goalProgressLabel: document.getElementById('goalProgressLabel'),
   assetsTableBody: document.getElementById('assetsTableBody'),
   liabilitiesTableBody: document.getElementById('liabilitiesTableBody'),
+  transactionsTableBody: document.getElementById('transactionsTableBody'),
   billsTableBody: document.getElementById('billsTableBody'),
   monthlyBillsTotal: document.getElementById('monthlyBillsTotal'),
   yearlyBillsTotal: document.getElementById('yearlyBillsTotal'),
@@ -210,6 +215,99 @@ function entriesByYear(entries, year) {
   return entries.filter((item) => toDateParts(item.date).year === year);
 }
 
+function getAvailableYears() {
+  const years = [
+    ...state.data.assetsLiabilities.map((item) => toDateParts(item.date).year),
+    ...state.data.transactions.map((item) => toDateParts(item.date).year)
+  ];
+
+  return Array.from(new Set(years)).sort((a, b) => a - b);
+}
+
+function summarizeTransactions(entries) {
+  const receitas = entries
+    .filter((item) => item.type === 'income')
+    .reduce((acc, item) => acc + Number(item.amount || 0), 0);
+  const gastos = entries
+    .filter((item) => item.type === 'expense')
+    .reduce((acc, item) => acc + Number(item.amount || 0), 0);
+
+  return {
+    receitas,
+    gastos,
+    saldo: receitas - gastos
+  };
+}
+
+function buildMonthlyTransactionSeries(entries, year) {
+  const yearlyEntries = entriesByYear(entries, year);
+  let saldoAcumulado = 0;
+
+  return MONTHS.map((label, monthIndex) => {
+    const monthEntries = yearlyEntries.filter((item) => toDateParts(item.date).monthIndex === monthIndex);
+    const resumo = summarizeTransactions(monthEntries);
+    saldoAcumulado += resumo.saldo;
+
+    return {
+      label,
+      receitas: resumo.receitas,
+      gastos: resumo.gastos,
+      saldo: saldoAcumulado
+    };
+  });
+}
+
+function formatTransactionType(type) {
+  return type === 'income' ? 'Receita' : 'Gasto';
+}
+
+function formatSignedCurrency(type, amount) {
+  const prefix = type === 'income' ? '+' : '-';
+  return `${prefix}${formatCurrency(amount)}`;
+}
+
+function computeFallbackWealthMetricsFromTransactions(year, goal) {
+  const transactionRows = entriesByYear(state.data.transactions, year);
+  const resumo = summarizeTransactions(transactionRows);
+  const netWorthByMonth = buildMonthlyTransactionSeries(state.data.transactions, year)
+    .map((item) => ({ label: item.label, total: item.saldo }));
+  const assetsByMonth = netWorthByMonth
+    .map((item) => ({ label: item.label, total: item.total > 0 ? item.total : 0 }));
+  const referenceDate = transactionRows[0] ? transactionRows[0].date : `${year}-01-01`;
+  const assets = resumo.saldo > 0
+    ? [{
+      category: 'Caixa',
+      name: 'Saldo do bot',
+      value: resumo.saldo,
+      date: referenceDate
+    }]
+    : [];
+  const liabilities = resumo.saldo < 0
+    ? [{
+      category: 'Saldo',
+      name: 'Saldo negativo do bot',
+      value: Math.abs(resumo.saldo),
+      date: referenceDate
+    }]
+    : [];
+  const firstMonth = netWorthByMonth.find((item) => item.total !== 0)?.total || 0;
+  const lastMonth = netWorthByMonth[netWorthByMonth.length - 1]?.total || 0;
+  const growth = firstMonth === 0 ? 0 : ((lastMonth - firstMonth) / Math.abs(firstMonth)) * 100;
+
+  return {
+    goalValue: goal ? Number(goal.net_worth_goal) : 0,
+    goalGap: Math.max((goal ? Number(goal.net_worth_goal) : 0) - resumo.saldo, 0),
+    growth,
+    netWorth: resumo.saldo,
+    assetTotal: assets.reduce((acc, item) => acc + Number(item.value), 0),
+    liabilityTotal: liabilities.reduce((acc, item) => acc + Number(item.value), 0),
+    assets,
+    liabilities,
+    assetsByMonth,
+    netWorthByMonth
+  };
+}
+
 function groupMonthlySnapshots(entries, year, type) {
   return MONTHS.map((label, monthIndex) => {
     const monthEntries = entries.filter((item) => {
@@ -228,7 +326,11 @@ function computeWealthMetrics(year) {
   const wealthRows = entriesByYear(state.data.assetsLiabilities, year);
   const assets = wealthRows.filter((row) => row.type === 'asset');
   const liabilities = wealthRows.filter((row) => row.type === 'liability');
-  const goal = state.data.goals.find((item) => new Date(item.end_date).getFullYear() === year) || state.data.goals[0] || null;
+  const goal = state.data.goals.find((item) => toDateParts(item.end_date).year === year) || state.data.goals[0] || null;
+
+  if (!wealthRows.length) {
+    return computeFallbackWealthMetricsFromTransactions(year, goal);
+  }
 
   const assetTotal = assets.reduce((acc, item) => acc + Number(item.value), 0);
   const liabilityTotal = liabilities.reduce((acc, item) => acc + Number(item.value), 0);
@@ -276,6 +378,43 @@ function buildChart(name, config) {
   }
 
   state.charts[name] = new Chart(document.getElementById(name), config);
+}
+
+function renderFinanceSection() {
+  const resumo = summarizeTransactions(state.data.transactions);
+  const series = buildMonthlyTransactionSeries(state.data.transactions, state.selectedYear);
+
+  els.currentBalance.textContent = formatCurrency(resumo.saldo);
+  els.totalIncome.textContent = formatCurrency(resumo.receitas);
+  els.totalExpense.textContent = formatCurrency(resumo.gastos);
+  els.transactionCount.textContent = String(state.data.transactions.length);
+
+  buildChart('cashflowChart', {
+    type: 'line',
+    data: {
+      labels: series.map((item) => item.label),
+      datasets: [{
+        label: 'Saldo acumulado',
+        data: series.map((item) => item.saldo),
+        borderColor: '#39d98a',
+        backgroundColor: 'rgba(57, 217, 138, 0.16)',
+        fill: true,
+        tension: 0.35
+      }]
+    }
+  });
+
+  els.transactionsTableBody.innerHTML = state.data.transactions.length
+    ? state.data.transactions.slice(0, 10).map((item) => `
+      <tr>
+        <td>${formatTransactionType(item.type)}</td>
+        <td>${item.category || 'Outros'}</td>
+        <td>${item.description || 'Sem descricao'}</td>
+        <td>${formatSignedCurrency(item.type, item.amount)}</td>
+        <td>${formatDate(item.date)}</td>
+      </tr>
+    `).join('')
+    : emptyArrayMessage(5, 'Sem transações registradas pelo bot.');
 }
 
 function renderYearlySection() {
@@ -359,7 +498,7 @@ function renderYearlySection() {
 }
 
 function renderMultiYearSection() {
-  const years = Array.from(new Set(state.data.assetsLiabilities.map((item) => new Date(item.date).getFullYear()))).sort();
+  const years = getAvailableYears();
   const points = years.map((year) => ({
     year,
     summary: computeWealthMetrics(year)
@@ -555,12 +694,13 @@ async function fetchAllData() {
   state.data.assetsLiabilities = assetsLiabilities || [];
   state.data.goals = goals || [];
 
-  const years = state.data.assetsLiabilities.map((item) => new Date(item.date).getFullYear());
+  const years = getAvailableYears();
   if (years.length) {
     state.selectedYear = Math.max(...years);
     els.yearSelect.value = String(state.selectedYear);
   }
 
+  renderFinanceSection();
   renderYearlySection();
   renderMultiYearSection();
   renderBillsSection();
@@ -708,6 +848,7 @@ async function bootstrap() {
 
   els.yearSelect.addEventListener('change', () => {
     state.selectedYear = Number(els.yearSelect.value);
+    renderFinanceSection();
     renderYearlySection();
   });
 
