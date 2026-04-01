@@ -79,11 +79,6 @@ module.exports = async (req, res) => {
     return;
   }
 
-  if (!webhookSecret) {
-    responderJson(res, 500, { ok: false, error: 'webhook_secret_missing' });
-    return;
-  }
-
   if (rateLimited(req)) {
     responderJson(res, 429, { ok: false, error: 'rate_limited' });
     return;
@@ -91,7 +86,7 @@ module.exports = async (req, res) => {
 
   const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
 
-  if (!compararSegredoRecebido(secretHeader, webhookSecret)) {
+  if (webhookSecret && secretHeader && !compararSegredoRecebido(secretHeader, webhookSecret)) {
     responderJson(res, 401, { ok: false, error: 'unauthorized' });
     return;
   }
