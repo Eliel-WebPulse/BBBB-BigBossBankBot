@@ -13,6 +13,7 @@ const {
 
 const token = process.env.TELEGRAM_TOKEN;
 const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+const BOT_VERSION = '2026-04-01-e2';
 
 if (!token) {
   throw new Error('TELEGRAM_TOKEN nao foi definido no arquivo .env.');
@@ -299,6 +300,10 @@ bot.command('resumo', async (ctx) => {
   }
 });
 
+bot.command('versao', async (ctx) => {
+  await ctx.reply(`Versao do bot em execucao: ${BOT_VERSION}`);
+});
+
 bot.command('add_expense', async (ctx) => {
   const userId = await obterUserIdTelegram(ctx);
 
@@ -409,7 +414,7 @@ bot.command('ajustar_saldo', async (ctx) => {
 bot.on('text', async (ctx) => {
   const texto = ctx.message && ctx.message.text ? ctx.message.text.trim() : '';
 
-  if (!texto || texto.startsWith('/')) {
+  if (!texto) {
     return;
   }
 
@@ -421,6 +426,18 @@ bot.on('text', async (ctx) => {
     }
 
     if (await processarComandosFinanceirosNoTexto(ctx, texto, userId)) {
+      return;
+    }
+
+    if (texto.startsWith('/versao')) {
+      await ctx.reply(`Versao do bot em execucao: ${BOT_VERSION}`);
+      return;
+    }
+
+    if (texto.startsWith('/')) {
+      await ctx.reply(
+        'Comando nao reconhecido. Tente /saldo, /resumo, /ajustar_saldo 0 ou /versao.'
+      );
       return;
     }
 
