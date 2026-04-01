@@ -300,6 +300,51 @@ bot.command('add_bill', async (ctx) => {
   }
 });
 
+bot.command('ajustar_saldo', async (ctx) => {
+  const userId = await obterUserIdTelegram(ctx);
+
+  if (!userId) {
+    return;
+  }
+
+  const args = parseCommandArgs(ctx.message.text || '');
+  const saldoDesejado = parseMoney(args[0]);
+
+  if (saldoDesejado === null) {
+    await ctx.reply('Use o formato: /ajustar_saldo 0');
+    return;
+  }
+
+  try {
+    const saldoAtual = await buscarSaldo(userId);
+    const diferenca = Number((saldoDesejado - saldoAtual.saldo).toFixed(2));
+
+    if (diferenca === 0) {
+      await ctx.reply(`Seu saldo ja esta em ${formatarMoeda(saldoDesejado)}.`);
+      return;
+    }
+
+    const tipo = diferenca > 0 ? 'income' : 'expense';
+    const valorAjuste = Math.abs(diferenca);
+
+    await salvarTransacao(
+      userId,
+      tipo,
+      valorAjuste,
+      'Ajuste',
+      `Ajuste manual para saldo ${formatarMoeda(saldoDesejado)}`
+    );
+
+    await ctx.reply(
+      `Saldo ajustado com sucesso para ${formatarMoeda(saldoDesejado)}.\n` +
+      `Lancamento criado: ${tipo === 'income' ? 'receita' : 'gasto'} de ${formatarMoeda(valorAjuste)}.`
+    );
+  } catch (error) {
+    console.error('Erro em /ajustar_saldo:', error.message);
+    await ctx.reply('Nao consegui ajustar o saldo agora. Tente novamente em instantes.');
+  }
+});
+
 bot.on('text', async (ctx) => {
   const texto = ctx.message && ctx.message.text ? ctx.message.text.trim() : '';
 
