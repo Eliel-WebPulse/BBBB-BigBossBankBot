@@ -84,6 +84,13 @@ module.exports = async (req, res) => {
     return;
   }
 
+  const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
+
+  if (webhookSecret && !compararSegredoRecebido(secretHeader, webhookSecret)) {
+    responderJson(res, 401, { ok: false, error: 'unauthorized' });
+    return;
+  }
+
   try {
     const update = await lerCorpo(req);
     await bot.handleUpdate(update, res);

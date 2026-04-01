@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const { Telegraf } = require('telegraf');
 const { interpretarMensagem } = require('./gemini');
+const { buildTelegramWebhookSecret } = require('./webhook-secret');
 const {
   salvarTransacao,
   salvarBillSubscription,
@@ -12,7 +13,7 @@ const {
 } = require('./supabase');
 
 const token = process.env.TELEGRAM_TOKEN;
-const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+const webhookSecret = buildTelegramWebhookSecret(token, process.env.TELEGRAM_WEBHOOK_SECRET);
 const BOT_VERSION = '2026-04-01-e2';
 
 if (!token) {

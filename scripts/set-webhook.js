@@ -1,8 +1,10 @@
 require('dotenv').config();
 
+const { buildTelegramWebhookSecret } = require('../src/webhook-secret');
+
 const token = process.env.TELEGRAM_TOKEN;
 const webhookBaseUrl = process.env.WEBHOOK_BASE_URL;
-const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+const webhookSecret = buildTelegramWebhookSecret(token, process.env.TELEGRAM_WEBHOOK_SECRET);
 
 if (!token) {
   throw new Error('TELEGRAM_TOKEN nao foi definido no arquivo .env.');
@@ -21,9 +23,7 @@ async function configurarWebhook() {
     url: webhookUrl
   };
 
-  if (webhookSecret) {
-    payload.secret_token = webhookSecret;
-  }
+  payload.secret_token = webhookSecret;
 
   const response = await fetch(endpoint, {
     method: 'POST',
