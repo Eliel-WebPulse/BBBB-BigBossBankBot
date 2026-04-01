@@ -341,9 +341,20 @@ input,
 
 .link-actions {
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: auto auto auto;
   gap: 12px;
   align-items: center;
+}
+
+.link-open-btn {
+  text-decoration: none;
+  display: inline-grid;
+  place-items: center;
+}
+
+.link-open-btn.disabled {
+  pointer-events: none;
+  opacity: 0.45;
 }
 
 .metrics-grid {

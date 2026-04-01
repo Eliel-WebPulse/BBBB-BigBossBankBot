@@ -229,9 +229,26 @@ async function processarComandosFinanceirosNoTexto(ctx, texto, userId) {
 }
 
 bot.start(async (ctx) => {
+  const startPayload = ctx.startPayload || parseCommandArgs(ctx.message.text || '')[0] || '';
+
+  if (startPayload) {
+    try {
+      const vinculo = await vincularTelegramPorCodigo(ctx.chat.id, startPayload);
+
+      if (vinculo) {
+        await ctx.reply('Conta vinculada com sucesso. Agora voce ja pode registrar e consultar seus dados.');
+        return;
+      }
+    } catch (error) {
+      console.error('Erro ao vincular Telegram via /start:', error.message);
+      await ctx.reply('Nao consegui concluir a vinculacao automatica agora. Tente novamente em instantes.');
+      return;
+    }
+  }
+
   const mensagem = [
     'Oi! Eu sou seu bot de financas pessoais no Telegram.',
-    'Antes de tudo, vincule sua conta com /link CODIGO.',
+    'Antes de tudo, vincule sua conta com o link do dashboard ou com /link CODIGO.',
     'Voce pode me mandar mensagens como:',
     '- "gastei 35 reais com almoco"',
     '- "recebi 1200 de freelance"',

@@ -24,6 +24,7 @@ const els = {
   authStatus: document.getElementById('authStatus'),
   supabaseUrl: document.getElementById('supabaseUrl'),
   supabaseAnonKey: document.getElementById('supabaseAnonKey'),
+  telegramBotUsername: document.getElementById('telegramBotUsername'),
   emailInput: document.getElementById('emailInput'),
   passwordInput: document.getElementById('passwordInput'),
   saveConfigBtn: document.getElementById('saveConfigBtn'),
@@ -31,6 +32,7 @@ const els = {
   signUpBtn: document.getElementById('signUpBtn'),
   logoutBtn: document.getElementById('logoutBtn'),
   generateLinkBtn: document.getElementById('generateLinkBtn'),
+  openTelegramLinkBtn: document.getElementById('openTelegramLinkBtn'),
   linkCode: document.getElementById('linkCode'),
   yearSelect: document.getElementById('yearSelect'),
   yearNetWorth: document.getElementById('yearNetWorth'),
@@ -67,6 +69,7 @@ function loadConfig() {
   try {
     const config = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     els.supabaseUrl.value = config.url || '';
+    els.telegramBotUsername.value = config.telegramBotUsername || '';
     return config;
   } catch (error) {
     console.error(error);
@@ -76,11 +79,37 @@ function loadConfig() {
 
 function saveConfig() {
   const config = {
-    url: els.supabaseUrl.value.trim()
+    url: els.supabaseUrl.value.trim(),
+    telegramBotUsername: els.telegramBotUsername.value.trim().replace(/^@+/, '')
   };
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
   return config;
+}
+
+function buildTelegramDeepLink(code) {
+  const username = els.telegramBotUsername.value.trim().replace(/^@+/, '');
+
+  if (!username || !code || code === '----') {
+    return null;
+  }
+
+  return `https://t.me/${username}?start=${encodeURIComponent(code)}`;
+}
+
+function updateTelegramLinkButton(code = els.linkCode.textContent.trim()) {
+  const deepLink = buildTelegramDeepLink(code);
+
+  if (!deepLink) {
+    els.openTelegramLinkBtn.href = '#';
+    els.openTelegramLinkBtn.classList.add('disabled');
+    els.openTelegramLinkBtn.setAttribute('aria-disabled', 'true');
+    return;
+  }
+
+  els.openTelegramLinkBtn.href = deepLink;
+  els.openTelegramLinkBtn.classList.remove('disabled');
+  els.openTelegramLinkBtn.removeAttribute('aria-disabled');
 }
 
 function notify(message) {
@@ -432,6 +461,7 @@ async function fetchTelegramLink() {
 
   state.data.telegramLink = data;
   els.linkCode.textContent = data && data.link_code ? data.link_code : '----';
+  updateTelegramLinkButton();
 }
 
 async function fetchAllData() {
@@ -504,7 +534,15 @@ async function generateTelegramCode() {
   }
 
   els.linkCode.textContent = code;
-  notify(`Código gerado: ${code}. Envie /link ${code} no bot.`);
+  updateTelegramLinkButton(code);
+
+  const deepLink = buildTelegramDeepLink(code);
+
+  if (deepLink) {
+    notify(`Codigo gerado: ${code}. Agora clique em "Abrir no Telegram".`);
+  } else {
+    notify(`Codigo gerado: ${code}. Preencha o username do bot para abrir o Telegram direto, ou envie /link ${code} manualmente.`);
+  }
 }
 
 function updateAuthStatus(text) {
@@ -529,6 +567,7 @@ async function bootstrap() {
 
   els.saveConfigBtn.addEventListener('click', () => {
     initClient();
+    updateTelegramLinkButton();
     notify('Configuração salva no navegador.');
   });
 
@@ -587,6 +626,10 @@ async function bootstrap() {
     }
   });
 
+  els.telegramBotUsername.addEventListener('input', () => {
+    updateTelegramLinkButton();
+  });
+
   els.yearSelect.addEventListener('change', () => {
     state.selectedYear = Number(els.yearSelect.value);
     renderYearlySection();
@@ -603,6 +646,8 @@ async function bootstrap() {
       await fetchAllData();
     }
   }
+
+  updateTelegramLinkButton();
 }
 
 bootstrap();

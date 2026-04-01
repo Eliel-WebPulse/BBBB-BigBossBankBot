@@ -64,6 +64,10 @@
               <input id="supabaseAnonKey" type="password" placeholder="Cole sua anon key" />
             </label>
             <label>
+              <span>Telegram bot username</span>
+              <input id="telegramBotUsername" type="text" placeholder="seu_bot_sem_arroba" />
+            </label>
+            <label>
               <span>Email</span>
               <input id="emailInput" type="email" placeholder="voce@email.com" />
             </label>
@@ -82,10 +86,11 @@
           <div class="link-card">
             <div>
               <strong>Vincular Telegram</strong>
-              <span class="muted">Gere um código e envie no bot com <code>/link CODIGO</code>.</span>
+              <span class="muted">Gere um código e abra o bot pelo link direto. Se preferir, ainda pode usar <code>/link CODIGO</code>.</span>
             </div>
             <div class="link-actions">
               <button id="generateLinkBtn" class="secondary-btn" type="button">Gerar código</button>
+              <a id="openTelegramLinkBtn" class="primary-btn link-open-btn disabled" href="#" target="_blank" rel="noreferrer">Abrir no Telegram</a>
               <code id="linkCode">----</code>
             </div>
           </div>
@@ -110,7 +115,7 @@
           </article>
           <article class="tutorial-card">
             <strong>3. Vincule o Telegram</strong>
-            <p>Gere um código no dashboard e envie <code>/link CODIGO</code> no bot para associar seu chat ao seu user_id.</p>
+            <p>Gere um código no dashboard e clique em <code>Abrir no Telegram</code>. O bot recebe o código no <code>/start</code> e vincula seu chat automaticamente.</p>
           </article>
           <article class="tutorial-card">
             <strong>4. Alimente os dados</strong>
