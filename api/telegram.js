@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const crypto = require('crypto');
-const { bot, webhookSecret } = require('../src/bot');
+const { bot, webhookSecrets } = require('../src/bot');
 
 const RATE_WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS_PER_IP = 30;
@@ -27,6 +27,10 @@ function compararSegredoRecebido(secretHeader, expectedSecret) {
   }
 
   return crypto.timingSafeEqual(left, right);
+}
+
+function segredoAceito(secretHeader) {
+  return webhookSecrets.some((expectedSecret) => compararSegredoRecebido(secretHeader, expectedSecret));
 }
 
 function obterIp(req) {
@@ -86,7 +90,7 @@ module.exports = async (req, res) => {
 
   const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
 
-  if (webhookSecret && !compararSegredoRecebido(secretHeader, webhookSecret)) {
+  if (webhookSecrets.length > 0 && !segredoAceito(secretHeader)) {
     responderJson(res, 401, { ok: false, error: 'unauthorized' });
     return;
   }

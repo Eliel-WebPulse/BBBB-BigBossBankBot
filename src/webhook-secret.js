@@ -1,10 +1,6 @@
 const crypto = require('crypto');
 
-function buildTelegramWebhookSecret(token, explicitSecret) {
-  if (explicitSecret && String(explicitSecret).trim()) {
-    return String(explicitSecret).trim();
-  }
-
+function buildDerivedTelegramWebhookSecret(token) {
   if (!token || !String(token).trim()) {
     return '';
   }
@@ -17,6 +13,28 @@ function buildTelegramWebhookSecret(token, explicitSecret) {
   return `finn_${hash.slice(0, 48)}`;
 }
 
+function buildTelegramWebhookSecrets(token, explicitSecret) {
+  const secrets = [];
+
+  if (explicitSecret && String(explicitSecret).trim()) {
+    secrets.push(String(explicitSecret).trim());
+  }
+
+  const derivedSecret = buildDerivedTelegramWebhookSecret(token);
+
+  if (derivedSecret && !secrets.includes(derivedSecret)) {
+    secrets.push(derivedSecret);
+  }
+
+  return secrets;
+}
+
+function buildTelegramWebhookSecret(token, explicitSecret) {
+  return buildTelegramWebhookSecrets(token, explicitSecret)[0] || '';
+}
+
 module.exports = {
-  buildTelegramWebhookSecret
+  buildDerivedTelegramWebhookSecret,
+  buildTelegramWebhookSecret,
+  buildTelegramWebhookSecrets
 };
