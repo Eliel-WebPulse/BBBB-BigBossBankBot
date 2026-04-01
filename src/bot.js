@@ -122,18 +122,39 @@ function montarRespostaSaldoComPersonalidade(dadosSaldo) {
   const introducao = escolherMensagem([
     '📊 Fiz as contas sem derrubar a calculadora, um milagre estatístico.',
     '🧾 Abri o cofre dos números e trouxe a fofoca financeira.',
-    '😏 Dei uma espiada no seu saldo. Ele falou de você, inclusive.'
+    '😏 Dei uma espiada no seu saldo. Ele falou de você, inclusive.',
+    '💼 Consultei os números. Eles estão emocionados, mas cooperaram.',
+    '🕵️ Fui investigar seu saldo e encontrei provas materiais.',
+    '📉📈 Passei no extrato, bati na porta e ele abriu chorando.',
+    '🧠 Organizei os números para eles pararem de correr em círculos.',
+    '💳 Acabei de interrogar sua carteira. Ela entregou tudo.',
+    '📂 Revirei seus dados financeiros com o carinho de um auditor cansado.',
+    '🔍 Fiz a arqueologia do seu saldo e trouxe os fósseis mais recentes.'
   ]);
   const comentarioFinal = saldo >= 0
     ? escolherMensagem([
       'Nada mal. O dinheiro ainda não pediu socorro.',
       'Tá vivo, respirando e sem drama por enquanto.',
-      'Seguimos elegantes, sem vender o sofá.'
+      'Seguimos elegantes, sem vender o sofá.',
+      'Hoje o saldo não está passando vergonha em público.',
+      'Dá para dormir sem abraçar a calculadora.',
+      'Ainda não chegou a fase de rifar a geladeira.',
+      'Seu dinheiro continua de pé. Milagre aceito.',
+      'Por enquanto, o caos financeiro está em horário reduzido.',
+      'Tem dignidade bancária suficiente para o resto do dia.',
+      'Nada exuberante, mas também não é um incêndio contábil.'
     ])
     : escolherMensagem([
       'O saldo entrou no modo novela. Precisamos de um capítulo de recuperação.',
       'Seu dinheiro foi passear e esqueceu de voltar.',
-      'A conta tá dramática, mas nada que a gente não dome.'
+      'A conta tá dramática, mas nada que a gente não dome.',
+      'Seu extrato virou peça de teatro experimental.',
+      'O saldo decidiu praticar mergulho sem equipamento.',
+      'Temos aqui uma pequena tragédia patrocinada por gastos.',
+      'A situação está meio “fim do mês, começo do desespero”.',
+      'Seu dinheiro claramente brigou com você e saiu de casa.',
+      'O saldo tá negativo com convicção e certa arrogância.',
+      'Nada irreversível, mas o romantismo acabou quando o número ficou vermelho.'
     ]);
 
   return [
@@ -152,7 +173,14 @@ function montarRespostaResumoComPersonalidade(dadosResumo) {
   const abertura = escolherMensagem([
     '🧠 Resumo do mês saindo do forno, sem açúcar mas com verdade.',
     '📅 Passei pente fino no mês. Os números não mentem, só constrangem às vezes.',
-    '😌 Aqui vai o raio-x do mês, com um leve julgamento embutido.'
+    '😌 Aqui vai o raio-x do mês, com um leve julgamento embutido.',
+    '🗂️ Organizei o mês em formato compreensível para humanos e investidores feridos.',
+    '📚 Fechei o balanço do mês e ele veio com roteiro de comédia dramática.',
+    '🔎 Fiz uma vistoria no mês inteiro. A cena era forte, mas administrável.',
+    '💼 Resumo mensal pronto. O extrato cooperou depois de alguma pressão psicológica.',
+    '🧾 Catei as migalhas financeiras do mês e montei esse retrato.',
+    '📈 Reuni os fatos do mês. Alguns nobres, outros claramente impulsivos.',
+    '🎭 Aqui está o resumo do mês: uma mistura de estratégia, deslize e boletos.'
   ]);
 
   const linhas = [
@@ -175,7 +203,14 @@ function montarRespostaResumoComPersonalidade(dadosResumo) {
   linhas.push('', escolherMensagem([
     'Se quiser, manda mais um gasto aí e vamos alimentando o caos com método.',
     'Pode continuar. Eu organizo sua bagunça financeira com classe duvidosa.',
-    'Sigo de plantão, julgando em silêncio e registrando tudo.'
+    'Sigo de plantão, julgando em silêncio e registrando tudo.',
+    'Manda mais dados que eu sigo transformando pânico em tabela.',
+    'Pode despejar a movimentação. Eu separo o drama da contabilidade.',
+    'Se vier outro gasto, prometo sofrer com você em planilha.',
+    'Continuo aqui, firme, elegante e levemente decepcionado com seus impulsos.',
+    'Se quiser aprofundar o caos, eu trago organização e ironia.',
+    'Pode mandar a próxima. O orçamento já apanhou mesmo.',
+    'Sigo à disposição para registrar, resumir e julgar com carinho.'
   ]));
 
   return linhas.join('\n');
@@ -188,24 +223,52 @@ function montarRespostaTransacaoComPersonalidade(interpretacao) {
     ? escolherMensagem([
       '💸✨ Olha só, entrou dinheiro. A conta até sorriu torto.',
       '🤑 Receita registrada. O banco agradece o momento raro de esperança.',
-      '💰 Dinheiro na área. Finalmente uma notícia que não deprime a planilha.'
+      '💰 Dinheiro na área. Finalmente uma notícia que não deprime a planilha.',
+      '🏦 Registro feito. Seu saldo acaba de conhecer um sentimento chamado alívio.',
+      '✨ Entrou grana. Até o aplicativo do banco respirou melhor.',
+      '🥂 Receita anotada. Um evento raro e belo na vida financeira moderna.',
+      '📥 Dinheiro recebido. A planilha até levantou a cabeça.',
+      '🎉 Caiu valor positivo por aqui. Quase uma lenda urbana.',
+      '💵 Receita lançada com sucesso. Sua conta agradece e eu também.',
+      '😌 Entrou dinheiro. Finalmente uma reviravolta digna de aplauso.'
     ])
     : escolherMensagem([
       '💳 Anotado. Seu dinheiro saiu de cena com grande dramaticidade.',
       '😮‍💨 Gasto registrado. Mais um pequeno atentado contra a prosperidade.',
-      '🫠 Lancei a despesa. O orçamento sentiu, mas vai sobreviver.'
+      '🫠 Lancei a despesa. O orçamento sentiu, mas vai sobreviver.',
+      '🧾 Despesa registrada. Seu saldo pediu um minuto de silêncio.',
+      '💥 Mais um gasto entrou para o currículo da sua conta.',
+      '😬 Anotei aqui. O extrato revirou os olhos, mas seguiu em frente.',
+      '📉 Gasto confirmado. Pequeno golpe, grande simbolismo.',
+      '🫥 O dinheiro foi embora e eu já deixei isso documentado.',
+      '🎬 Despesa lançada. O orçamento perdeu mais uma batalha cinematográfica.',
+      '🙃 Registrei o gasto. Seu saldo não gostou, mas quem perguntou pra ele?'
     ]);
 
   const fechamento = isReceita
     ? escolherMensagem([
       'Continue assim e talvez o saldo pare de viver perigosamente.',
       'Do jeito que vai, até o extrato fica menos ofensivo.',
-      'Milagre financeiro detectado com sucesso.'
+      'Milagre financeiro detectado com sucesso.',
+      'Mais disso e eu começo a acreditar em recuperação.',
+      'Seu futuro eu não sei, mas seu saldo aprovou esse movimento.',
+      'Persistindo assim, a conta talvez largue os maus hábitos.',
+      'Foi bonito. Curto, mas bonito.',
+      'Nada exagerado, só um respiro civilizado nas finanças.',
+      'Hoje você fez as pazes com a matemática.',
+      'Siga nesse ritmo e talvez eu pare de te olhar com desconfiança.'
     ])
     : escolherMensagem([
       'Tudo sob controle... eu acho.',
       'Seguimos firmes, mesmo com o saldo levando dano crítico.',
-      'Respira. Foi só dinheiro. Provavelmente.'
+      'Respira. Foi só dinheiro. Provavelmente.',
+      'Nada que uma boa renda extra e negação moderada não resolvam.',
+      'Dói, mas agora pelo menos está organizado.',
+      'O importante é que o estrago está catalogado.',
+      'Seu saldo caiu, mas minha capacidade de julgar subiu.',
+      'É assim que nascem as histórias de superação financeira.',
+      'Poderia ser pior. Sempre pode. Isso é o mais assustador.',
+      'Mais um capítulo adicionado ao romance trágico entre você e o orçamento.'
     ]);
 
   return [
@@ -223,7 +286,15 @@ function montarRespostaInvalidaComPersonalidade() {
   return escolherMensagem([
     '🤨 Entendi foi nada, campeão. Tenta algo como "gastei 42 com transporte" ou "qual meu saldo".',
     '🫠 Isso aí ficou místico demais até pra mim. Me manda algo como "recebi 500" ou "resumo do mês".',
-    '😵 Meu talento é finanças, não adivinhação. Reformula com algo tipo "gastei 30 com almoço".'
+    '😵 Meu talento é finanças, não adivinhação. Reformula com algo tipo "gastei 30 com almoço".',
+    '🌀 Você me mandou um enigma. Eu queria um gasto, uma receita ou uma consulta.',
+    '🤹 Isso ficou artístico demais. Tenta algo mais direto, tipo "ganhei 200" ou "qual meu saldo".',
+    '🧩 Faltaram peças nesse quebra-cabeça. Me dá uma frase mais objetiva.',
+    '👀 Eu até tentei entender, mas sua mensagem saiu correndo da lógica.',
+    '📡 O sinal veio fraco. Tenta de novo com algo tipo "gastei 18 com café".',
+    '🎭 Ficou dramático, mas pouco contábil. Manda em formato mais claro.',
+    '🤖 Minha especialidade é finanças debochadas, não decifrar profecias.',
+    '🪄 Se isso era uma mensagem financeira, ela veio disfarçada demais.'
   ]);
 }
 
@@ -282,7 +353,18 @@ async function ajustarSaldoParaValor(ctx, userId, saldoDesejado, options = {}) {
 
   if (diferenca === 0) {
     const mensagem = options.comPersonalidade
-      ? `😌 Calma, gênio do equilíbrio: seu saldo já está em ${formatarMoeda(saldoDesejado)}. Nem precisei salvar o dia.`
+      ? escolherMensagem([
+        `😌 Calma, gênio do equilíbrio: seu saldo já está em ${formatarMoeda(saldoDesejado)}. Nem precisei salvar o dia.`,
+        `🧘 Relaxa: o saldo já está em ${formatarMoeda(saldoDesejado)}. Você pediu e o universo respondeu antes de mim.`,
+        `📍 Missão redundante detectada. Seu saldo já está em ${formatarMoeda(saldoDesejado)}.`,
+        `😎 Nem precisei encostar nos números. O saldo já está em ${formatarMoeda(saldoDesejado)}.`,
+        `🫡 Ordem recebida, mas o trabalho já estava feito: saldo em ${formatarMoeda(saldoDesejado)}.`,
+        `📉📈 Curiosamente, não houve drama. Seu saldo já está em ${formatarMoeda(saldoDesejado)}.`,
+        `🎯 Você acertou no alvo que já estava acertado: saldo em ${formatarMoeda(saldoDesejado)}.`,
+        `🧠 Verificação concluída: saldo em ${formatarMoeda(saldoDesejado)}. Zero esforço, máximo charme.`,
+        `💤 Quase trabalhei à toa. Seu saldo já está em ${formatarMoeda(saldoDesejado)}.`,
+        `✨ Nada a ajustar. O saldo já se encontra belamente em ${formatarMoeda(saldoDesejado)}.`
+      ])
       : `Seu saldo ja esta em ${formatarMoeda(saldoDesejado)}.`;
     await ctx.reply(mensagem);
     return true;
@@ -306,7 +388,16 @@ async function ajustarSaldoParaValor(ctx, userId, saldoDesejado, options = {}) {
       escolherMensagem([
         'Agora o saldo parou de inventar moda.',
         'Organizei a bagunça sem chamar reforço.',
-        'Seu extrato continua dramático, mas pelo menos coerente.'
+        'Seu extrato continua dramático, mas pelo menos coerente.',
+        'A planilha voltou a ter algum respeito próprio.',
+        'Corrigi a rota antes que o extrato escrevesse uma carta de demissão.',
+        'Seu caos agora está pelo menos alinhado com a matemática.',
+        'Ajuste concluído com elegância e uma pitada de julgamento.',
+        'Pronto. A desordem financeira perdeu essa rodada.',
+        'Reequilibrei a cena do crime contábil.',
+        'Agora os números fazem sentido, o que já é um avanço raro.',
+        'Seu saldo recebeu terapia intensiva e respondeu bem.',
+        'Ajustado. Seu dinheiro ainda é dramático, mas menos confuso.'
       ])
     ].join('\n')
     : `Saldo ajustado com sucesso para ${formatarMoeda(saldoDesejado)}.\n` +
