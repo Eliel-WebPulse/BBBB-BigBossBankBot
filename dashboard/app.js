@@ -103,6 +103,7 @@ function loadConfig() {
   try {
     const config = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     els.supabaseUrl.value = config.url || '';
+    els.supabaseAnonKey.value = config.anonKey || '';
     els.telegramBotUsername.value = config.telegramBotUsername || '';
     return config;
   } catch (error) {
@@ -114,6 +115,7 @@ function loadConfig() {
 function saveConfig() {
   const config = {
     url: els.supabaseUrl.value.trim(),
+    anonKey: els.supabaseAnonKey.value.trim(),
     telegramBotUsername: els.telegramBotUsername.value.trim().replace(/^@+/, '')
   };
 
@@ -177,7 +179,7 @@ function makeYearOptions() {
 
 function initClient() {
   const config = saveConfig();
-  const anonKey = els.supabaseAnonKey.value.trim();
+  const anonKey = config.anonKey;
 
   if (!config.url || !anonKey) {
     els.authStatus.textContent = 'Informe URL e anon key do Supabase';
@@ -205,6 +207,21 @@ function updateAuthUI() {
   els.sessionPill.classList.remove('is-authenticated');
   els.linkCode.textContent = '----';
   updateTelegramLinkButton('----');
+}
+
+function resetDashboardData() {
+  state.data.transactions = [];
+  state.data.bills = [];
+  state.data.assetsLiabilities = [];
+  state.data.goals = [];
+  state.data.telegramLink = null;
+  state.selectedYear = new Date().getFullYear();
+  els.linkCode.textContent = '----';
+  renderFinanceSection();
+  renderYearlySection();
+  renderMultiYearSection();
+  renderBillsSection();
+  renderCalendar();
 }
 
 function emptyArrayMessage(colspan, text) {
@@ -826,6 +843,7 @@ async function bootstrap() {
     state.session = null;
     updateAuthStatus('Sessão encerrada');
     updateAuthUI();
+    resetDashboardData();
   });
 
   els.generateLinkBtn.addEventListener('click', async () => {
@@ -860,12 +878,14 @@ async function bootstrap() {
       if (!state.user) {
         updateAuthStatus('Sessão encerrada');
         updateAuthUI();
+        resetDashboardData();
         return;
       }
 
       updateAuthStatus(`Logado como ${state.user.email}`);
       updateAuthUI();
       await fetchTelegramLink();
+      await fetchAllData();
     });
 
     const { data } = await state.client.auth.getSession();
